@@ -1,0 +1,81 @@
+import streamlit as st
+import requests
+from bs4 import BeautifulSoup
+from deep_translator import GoogleTranslator
+import nltk
+import re
+
+# Télécharger les ressources pour le découpage en phrases
+nltk.download('punkt_tab')
+from nltk.tokenize import sent_tokenize
+
+# Fonction pour récupérer un article de La Stampa
+def fetch_article():
+    url = "https://www.lastampa.it/"
+    response = requests.get(url)
+    soup = BeautifulSoup(response.content, "html.parser")
+    links = [a['href'] for a in soup.find_all('a', href=True) if '/cronaca/' in a['href']]
+
+    for link in links:
+        article_url = link if link.startswith("http") else f"https://www.lastampa.it{link}"
+        article_resp = requests.get(article_url)
+        article_soup = BeautifulSoup(article_resp.content, "html.parser")
+        title = article_soup.find('h1').get_text(strip=True) if article_soup.find('h1') else "Titre non trouvé"
+        
+        story_div = article_soup.find('div', class_='story__text')
+        if story_div:
+            paragraphs = story_div.find_all('p')
+            content = " ".join(p.get_text() for p in paragraphs)
+            if 3000 <= len(content) <= 5000:
+                return title, article_url, content
+    return "Aucun article trouvé.", "", "", ""
+
+# Fonction pour découper le texte en phrases
+def split_into_sentences(text):
+    sentences = re.split(r'(?<=[.!?,]) +', text)
+    return sentences
+
+# Fonction de traduction d'une phrase
+def translate_sentence(sentence):
+    return GoogleTranslator(source='it', target='fr').translate(sentence)
+
+
+
+# Initialisation de la session state
+if 'translations' not in st.session_state:
+    st.session_state.translations = {}
+    st.session_state.article = None
+    st.session_state.title = ""
+    st.session_state.link = ""
+    
+
+if st.button("Charger un nouvel article"):
+    title, link, article = fetch_article()
+    title_fr = translate_sentence(title)
+    sentences = split_into_sentences(article)
+    st.session_state.article = sentences
+    st.session_state.translations = {i: None for i in range(len(sentences))}
+    st.session_state.title = title
+    st.session_state.title_fr = title_fr
+    st.session_state.link = link
+    
+
+if st.session_state.article:
+    st.title(st.session_state.title)
+    st.subheader(st.session_state.title_fr)
+    st.markdown(f"[Lien vers l'article]({st.session_state.link})")
+    
+
+    for idx, sentence in enumerate(st.session_state.article):
+        cols = st.columns([2, 4])
+        with cols[0]:
+            if st.button(sentence, key=f"sentence_{idx}"):
+                if st.session_state.translations[idx] is None:
+                    st.session_state.translations[idx] = translate_sentence(sentence)
+                else:
+                    st.session_state.translations[idx] = None  # Masquer la traduction si déjà affichée
+        with cols[1]:
+            translation = st.session_state.translations[idx]
+            if translation:
+                st.markdown(f"<p style='text-align:left; color: green;'>{translation}</p>", unsafe_allow_html=True)
+
