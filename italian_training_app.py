@@ -124,3 +124,14 @@ if st.session_state.article:
         # Affichage du score
         if st.session_state.quiz_submitted:
             st.success(f"Votre score : {st.session_state.score}/10")
+
+            st.subheader("Détail des réponses :")
+            for word, correct_translation in st.session_state.correct_answers.items():
+              user_answer =           st.session_state.quiz_answers[word].strip().lower()
+        if user_answer == correct_translation:
+            st.markdown(f"✅ **{word}** → {correct_translation}", unsafe_allow_html=True)
+        else:
+            st.markdown(
+                f"❌ **{word}** → Votre réponse : *{user_answer}* | **Bonne réponse :** {correct_translation}",
+                unsafe_allow_html=True
+            )
