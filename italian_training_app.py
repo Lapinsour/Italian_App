@@ -62,6 +62,7 @@ if 'translations' not in st.session_state:
     st.session_state.quiz_started = False
     st.session_state.quiz_submitted = False
     st.session_state.score = 0
+    st.session_state.correct_answers = {}
 
 # Bouton pour charger un nouvel article
 if st.button("Charger un nouvel article"):
@@ -76,6 +77,7 @@ if st.button("Charger un nouvel article"):
     st.session_state.quiz_started = False
     st.session_state.quiz_submitted = False
     st.session_state.score = 0
+    st.session_state.correct_answers = {}
 
 # Affichage de l'article
 if st.session_state.article:
@@ -104,6 +106,7 @@ if st.session_state.article:
         st.session_state.quiz_started = True
         st.session_state.quiz_submitted = False
         st.session_state.score = 0
+        st.session_state.correct_answers = {}
 
     # Affichage du test
     if st.session_state.quiz_started:
@@ -114,24 +117,27 @@ if st.session_state.article:
         # Bouton pour soumettre les réponses
         if st.button("Résultats du test") and not st.session_state.quiz_submitted:
             score = 0
+            correct_answers = {}
             for word, user_answer in st.session_state.quiz_answers.items():
                 correct_translation = translate_sentence(word).lower()
+                correct_answers[word] = correct_translation
                 if user_answer.strip().lower() == correct_translation:
                     score += 1
             st.session_state.score = score
+            st.session_state.correct_answers = correct_answers
             st.session_state.quiz_submitted = True
 
-        # Affichage du score
+        # Affichage détaillé des résultats
         if st.session_state.quiz_submitted:
             st.success(f"Votre score : {st.session_state.score}/10")
 
             st.subheader("Détail des réponses :")
             for word, correct_translation in st.session_state.correct_answers.items():
-              user_answer =           st.session_state.quiz_answers[word].strip().lower()
-        if user_answer == correct_translation:
-            st.markdown(f"✅ **{word}** → {correct_translation}", unsafe_allow_html=True)
-        else:
-            st.markdown(
-                f"❌ **{word}** → Votre réponse : *{user_answer}* | **Bonne réponse :** {correct_translation}",
-                unsafe_allow_html=True
-            )
+                user_answer = st.session_state.quiz_answers[word].strip().lower()
+                if user_answer == correct_translation:
+                    st.markdown(f"✅ **{word}** → {correct_translation}", unsafe_allow_html=True)
+                else:
+                    st.markdown(
+                        f"❌ **{word}** → Votre réponse : *{user_answer}* | **Bonne réponse :** {correct_translation}",
+                        unsafe_allow_html=True
+                    )
