@@ -217,7 +217,7 @@ if st.session_state.article:
                 st.markdown(f"<p style='text-align:left; color: green;'>{translation}</p>", unsafe_allow_html=True)
 
     # Lancer le quiz
-    if st.markdown('<button class="test-button">Commencer le test</button>', unsafe_allow_html=True) and st.session_state.user_email:
+    if st.button('Commencer le test') and st.session_state.user_email:
         if has_taken_test_today(st.session_state.user_email):
             st.warning("Vous avez déjà passé le test aujourd'hui. Revenez demain !")
         else:
@@ -233,7 +233,7 @@ if st.session_state.quiz_started and not st.session_state.quiz_submitted:
     for word in st.session_state.quiz_words:
         st.session_state.quiz_answers[word] = st.text_input(f"Traduction de '{word}'", key=f"answer_{word}")
 
-    if st.markdown('<button class="history-button">Résultats du test</button>', unsafe_allow_html=True):
+    if st.button('Résultats du test'):
         score = 0
         correct_answers = {}
         for word, user_answer in st.session_state.quiz_answers.items():
