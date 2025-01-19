@@ -54,8 +54,8 @@ def initialize_db():
     conn.commit()
     conn.close()
 
-# Appelez cette fonction pour vous assurer que la base est correctement initialisée
-initialize_db()
+
+
 
 # Scraper l'article (récupérer uniquement le lien et la date)
 def fetch_article_link():
@@ -132,6 +132,7 @@ if 'page' not in st.session_state:
 
 # PAGE 1: ACCUEIL
 if st.session_state.page == 1:
+    initialize_db()
     st.title("Bienvenue dans l'application d'apprentissage")
     email = st.text_input("Veuillez entrer votre adresse email pour continuer :")
     if st.button("Poursuivre vers l'application"):
