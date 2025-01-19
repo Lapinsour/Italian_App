@@ -9,7 +9,7 @@ from datetime import datetime
 import random
 
 # Télécharger les ressources NLTK
-nltk.download('punkt')
+nltk.download('punkt_tab')
 nltk.download('stopwords')
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize, sent_tokenize
