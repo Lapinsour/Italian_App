@@ -63,8 +63,8 @@ def fetch_article_link():
     response = requests.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
     
-    # Filtrer les liens contenant "/cronaca/"
-    links = [a['href'] for a in soup.find_all('a', href=True) if '/cronaca/' in a['href']]
+    # Filtrer les liens contenant "/esteri/" ou d'autres sections pertinentes
+    links = [a['href'] for a in soup.find_all('a', href=True) if '/esteri/' in a['href'] or '/cronaca/' in a['href']]
     
     if links:
         # Vérifier si le lien est complet ou non, sinon le compléter avec le domaine principal
