@@ -4,4 +4,4 @@ beautifulsoup4
 deep-translator 
 nltk
 matplotlib
-
+seaborn
