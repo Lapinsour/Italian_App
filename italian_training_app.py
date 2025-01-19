@@ -3,18 +3,12 @@ import requests
 from bs4 import BeautifulSoup
 from deep_translator import GoogleTranslator
 import nltk
-import re
 import sqlite3
 from datetime import datetime
-import pandas as pd
-import matplotlib.pyplot as plt
 import random
 
 # Télécharger les ressources NLTK
-nltk.download('punkt')
-nltk.download('stopwords')
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
+nltk.download('punkt_tab')
 
 # Connexion à la base SQLite
 conn = sqlite3.connect('quiz_results.db')
@@ -37,83 +31,61 @@ CREATE TABLE IF NOT EXISTS quiz_words (
     FOREIGN KEY (result_id) REFERENCES results(id)
 )
 """)
-
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS daily_article (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     date TEXT UNIQUE,
-    title TEXT,
-    link TEXT,
-    content TEXT
+    link TEXT
 )
 """)
-
 conn.commit()
 
-# Fonction pour scrapper un article (exécutée une fois par jour)
-def fetch_article():
+# Scraper l'article (récupérer uniquement le lien et la date)
+def fetch_article_link():
     url = "https://www.lastampa.it/"
     response = requests.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
     links = [a['href'] for a in soup.find_all('a', href=True) if '/cronaca/' in a['href']]
+    if links:
+        return links[0] if links[0].startswith("http") else f"https://www.lastampa.it{links[0]}"
+    return ""
 
-    for link in links:
-        article_url = link if link.startswith("http") else f"https://www.lastampa.it{link}"
-        article_resp = requests.get(article_url)
-        article_soup = BeautifulSoup(article_resp.content, "html.parser")
-        title = article_soup.find('h1').get_text(strip=True) if article_soup.find('h1') else "Titre non trouvé"
-        story_div = article_soup.find('div', class_='story__text')
-
-        if story_div:
-            paragraphs = story_div.find_all('p')
-            content = " ".join(p.get_text() for p in paragraphs)
-            if 3000 <= len(content) <= 5000:
-                return title, article_url, content
-    return "Aucun article trouvé.", "", ""
-
-# Récupérer ou stocker l'article du jour
-def get_daily_article():
+# Sauvegarder ou récupérer le lien de l'article pour la date du jour
+def get_daily_article_link():
     today = datetime.now().strftime("%Y-%m-%d")
-    cursor.execute("SELECT * FROM daily_article WHERE date = ?", (today,))
+    cursor.execute("SELECT link FROM daily_article WHERE date = ?", (today,))
     row = cursor.fetchone()
     if row:
-        return row[1], row[2], row[3]  # title, link, content
+        return row[0]
     else:
-        title, link, content = fetch_article()
-        cursor.execute("INSERT INTO daily_article (date, title, link, content) VALUES (?, ?, ?, ?)",
-                       (today, title, link, content))
+        link = fetch_article_link()
+        cursor.execute("INSERT INTO daily_article (date, link) VALUES (?, ?)", (today, link))
         conn.commit()
-        return title, link, content
+        return link
 
-# Fonction pour afficher les scores sous forme de graphique
-def plot_scores(email):
-    cursor.execute("SELECT date, score FROM results WHERE email = ? ORDER BY date", (email,))
-    data = cursor.fetchall()
-    if data:
-        df = pd.DataFrame(data, columns=["Date", "Score"])
-        plt.figure(figsize=(8, 5))
-        plt.plot(df["Date"], df["Score"], marker="o", linestyle="-", color="blue")
-        plt.title("Évolution des scores de quiz")
-        plt.xlabel("Date")
-        plt.ylabel("Score")
-        plt.xticks(rotation=45)
-        st.pyplot(plt)
-    else:
-        st.info("Aucun score enregistré pour le moment.")
+# Scraper le contenu de l'article depuis son lien
+def scrape_article_content(link):
+    response = requests.get(link)
+    soup = BeautifulSoup(response.content, "html.parser")
+    title = soup.find('h1').get_text(strip=True) if soup.find('h1') else "Titre non trouvé"
+    story_div = soup.find('div', class_='story__text')
+    paragraphs = story_div.find_all('p') if story_div else []
+    content = " ".join(p.get_text() for p in paragraphs)
+    return title, content
 
-# Fonction pour extraire des mots aléatoires
-def extract_random_words(text, n=10):
-    stop_words_it = set(stopwords.words('italian'))
-    words = word_tokenize(text.lower())
-    words = [word for word in words if word.isalpha() and word not in stop_words_it]
-    return random.sample(words, n) if len(words) >= n else words
+# Traduire une phrase
+def translate_sentence(sentence):
+    return GoogleTranslator(source='it', target='fr').translate(sentence)
 
 # Gestion des pages
 st.set_page_config(layout="wide")
 if 'page' not in st.session_state:
     st.session_state.page = 1
-if 'article_data' not in st.session_state:
-    st.session_state.article_data = None
+    st.session_state.article = None
+    st.session_state.title = None
+    st.session_state.translations = []
+    st.session_state.link = None
+    st.session_state.title_fr = None
 
 # PAGE 1: ACCUEIL
 if st.session_state.page == 1:
@@ -121,7 +93,7 @@ if st.session_state.page == 1:
     email = st.text_input("Veuillez entrer votre adresse email pour continuer :")
     if st.button("Poursuivre vers l'application"):
         st.session_state.user_email = email
-        st.session_state.article_data = get_daily_article()
+        st.session_state.link = get_daily_article_link()
         st.session_state.page = 2
 
 # PAGE 2: DASHBOARD
@@ -129,7 +101,7 @@ elif st.session_state.page == 2:
     st.title("Dashboard")
     st.header(f"Bonjour, {st.session_state.user_email}")
     st.subheader("Votre progression :")
-    plot_scores(st.session_state.user_email)
+    st.info("Graphique des scores à ajouter ici.")
 
     col1, col2 = st.columns(2)
     with col1:
@@ -141,14 +113,34 @@ elif st.session_state.page == 2:
 
 # PAGE 3: ARTICLE DU JOUR
 elif st.session_state.page == 3:
-    title, link, content = st.session_state.article_data
-    st.title(title)
-    st.markdown(f"[Lire l'article original]({link})")
-    st.markdown(content)
+    if st.session_state.article is None:
+        title, content = scrape_article_content(st.session_state.link)
+        sentences = nltk.sent_tokenize(content)
+        st.session_state.article = sentences
+        st.session_state.title = title
+        st.session_state.translations = [None] * len(sentences)
+        st.session_state.title_fr = translate_sentence(title)
+
+    # Affichage de l'article
+    st.title(st.session_state.title)
+    st.subheader(st.session_state.title_fr)
+    st.markdown(f"[Lien vers l'article]({st.session_state.link})")
+
+    for idx, sentence in enumerate(st.session_state.article):
+        cols = st.columns([2, 4])
+        with cols[0]:
+            if st.button(sentence, key=f"sentence_{idx}"):
+                if st.session_state.translations[idx] is None:
+                    st.session_state.translations[idx] = translate_sentence(sentence)
+                else:
+                    st.session_state.translations[idx] = None
+        with cols[1]:
+            translation = st.session_state.translations[idx]
+            if translation:
+                st.markdown(f"<p style='text-align:left; color: green;'>{translation}</p>", unsafe_allow_html=True)
 
     if st.button("Lancer le quiz"):
-        # Ajoute le code pour le quiz ici
-        pass
+        st.session_state.page = 5
 
 # PAGE 4: RÉVISIONS
 elif st.session_state.page == 4:
