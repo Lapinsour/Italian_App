@@ -246,7 +246,7 @@ if st.session_state.quiz_submitted:
             st.markdown(f"❌ **{word}** : {correct_translation} (Votre réponse : {user_answer})")
 
 
-if st.markdown('<button class="history-button">Voir mon historique</button>', unsafe_allow_html=True):
+if st.button("Voir mon historique"):
     # Récupérer les résultats de l'utilisateur depuis la base de données
     cursor.execute("SELECT date, score FROM results WHERE email = ?", (st.session_state.user_email,))
     results = cursor.fetchall()
