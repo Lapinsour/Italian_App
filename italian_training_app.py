@@ -186,6 +186,11 @@ elif st.session_state.page == 3:
     else:
         st.warning("Aucune phrase à afficher pour cet article.")
 
+    # Vérifier si l'utilisateur a déjà pris le test aujourd'hui
+    if has_taken_test_today(st.session_state.user_email):
+        st.warning("Vous avez déjà passé le test aujourd'hui. Revenez demain !")
+        st.session_state.page = 2
+
     # Bouton pour accéder au quiz
     if st.button("Lancer le quiz"):
         st.session_state.page = 5
@@ -253,15 +258,11 @@ elif st.session_state.page == 5:
         # Affichage des résultats du quiz
         if st.session_state.quiz_submitted:
             st.success(f"Votre score : {st.session_state.score}/10")
-            st.subheader("Corrections :")
-            for word, correct_translation in st.session_state.correct_answers.items():
-                user_answer = st.session_state.quiz_answers[word]
-                if user_answer.strip().lower() == correct_translation:
-                    st.markdown(f"✅ **{word}** : {correct_translation}")
-                else:
-                    st.markdown(
-                        f"❌ **{word}** : {correct_translation} (Votre réponse : {user_answer})"
-                    )
-            if st.button("Retour à la page 2"):
-                st.session_state.page = 2
+            st.write("Réponses correctes :")
+            for word, correct_answer in st.session_state.correct_answers.items():
+                st.write(f"{word}: {correct_answer}")
 
+            st.button("Retour au tableau de bord", on_click=lambda: setattr(st.session_state, "page", 2))
+
+# Fermeture de la connexion à la base de données
+conn.close()
