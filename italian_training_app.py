@@ -225,6 +225,27 @@ if st.button("Voir mon historique"):
     plt.figure(figsize=(10, 6))
     sns.lineplot(data=df, x="Date", y="Score", marker='o')
     plt.title("Évolution de vos scores au quiz")
+
+# Ajouter un bouton "Librairie" pour afficher ou masquer la liste des mots et leur traduction
+if 'show_librairie' not in st.session_state:
+    st.session_state.show_librairie = False  # Initialiser l'état du tableau
+
+if st.button("Librairie"):
+    # Alterner l'état d'affichage du tableau
+    st.session_state.show_librairie = not st.session_state.show_librairie
+
+# Afficher ou masquer le tableau en fonction de l'état
+if st.session_state.show_librairie:
+    # Récupérer les mots et leur traduction depuis la base de données
+    cursor.execute("SELECT word, correct FROM librairie_de_mots")
+    words = cursor.fetchall()
+
+    # Convertir les résultats en DataFrame pour un affichage plus propre
+    df_librairie = pd.DataFrame(words, columns=["Mot", "Traduction"])
+
+    # Affichage du tableau des mots et traductions
+    st.subheader("Librairie de mots et leurs traductions")
+    st.dataframe(df_librairie)
     plt.xlabel("Date")
     plt.ylabel("Score")
     plt.xticks(rotation=45)
