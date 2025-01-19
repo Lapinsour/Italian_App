@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS librairie_mots (
     FOREIGN KEY (result_id) REFERENCES results(id)
 )
 """)
-conn.commit()
+
 # Nettoyage de la table librairie_mots
 cursor.execute("""
 DELETE FROM librairie_mots
@@ -58,7 +58,7 @@ WITH duplicates AS (
 DELETE FROM librairie_de_mots
 WHERE id NOT IN (SELECT keep_id FROM duplicates)
 """)
-
+conn.commit()
 # Fonction pour récupérer un article de La Stampa
 def fetch_article():
     url = "https://www.lastampa.it/"
