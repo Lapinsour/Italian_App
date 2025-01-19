@@ -61,7 +61,7 @@ def initialize_db():
 
 # Scraper l'article (récupérer uniquement le lien et la date)
 def fetch_article_link():
-    url = "https://www.lastampa.it/"
+    url = "https://www.lastampa.it/cronaca/"
     response = requests.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
     
@@ -72,7 +72,7 @@ def fetch_article_link():
         # Prendre le premier lien trouvé
         article_link = links[0]
         
-        # Si le lien est relatif, compléter avec l'URL de base
+        # Vérifier si l'URL est relative (si elle commence par '/')
         if article_link.startswith("/"):
             article_link = f"https://www.lastampa.it{article_link}"
         
