@@ -57,7 +57,8 @@ def initialize_db():
 
 
 
-# Scraper l'article (récupérer uniquement le lien et la date)
+
+
 # Scraper l'article (récupérer uniquement le lien et la date)
 def fetch_article_link():
     url = "https://www.lastampa.it/"
@@ -68,12 +69,16 @@ def fetch_article_link():
     links = [a['href'] for a in soup.find_all('a', href=True) if '/cronaca/' in a['href'] and len(a['href'].split('/')) > 4]
     
     if links:
-        # Prendre le premier lien trouvé et s'assurer qu'il commence par "http"
+        # Prendre le premier lien trouvé
         article_link = links[0]
-        if not article_link.startswith("http"):
+        
+        # Si le lien est relatif, compléter avec l'URL de base
+        if article_link.startswith("/"):
             article_link = f"https://www.lastampa.it{article_link}"
+        
         return article_link
     return ""
+
 
 # Sauvegarder ou récupérer le lien de l'article pour la date du jour
 def get_daily_article_link():
