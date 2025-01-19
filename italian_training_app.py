@@ -49,15 +49,7 @@ DELETE FROM librairie_mots
 WHERE correct_translation IS NULL
 """)
 
-cursor.execute("""
-WITH duplicates AS (
-    SELECT MIN(id) AS keep_id
-    FROM librairie_mots
-    GROUP BY word, correct_translation
-)
-DELETE FROM librairie_de_mots
-WHERE id NOT IN (SELECT keep_id FROM duplicates)
-""")
+
 conn.commit()
 # Fonction pour récupérer un article de La Stampa
 def fetch_article():
@@ -250,7 +242,7 @@ if st.button("Librairie"):
 # Afficher ou masquer le tableau en fonction de l'état
 if st.session_state.show_librairie:
     # Récupérer les mots et leur traduction depuis la base de données
-    cursor.execute("SELECT word, correct_translation FROM librairie_mots ORDER BY word")
+    cursor.execute("SELECT word, correct_translation FROM librairie_mots GROUP BY word, correct_translation ORDER BY word")
     words = cursor.fetchall()
 
     # Convertir les résultats en DataFrame pour un affichage plus propre
