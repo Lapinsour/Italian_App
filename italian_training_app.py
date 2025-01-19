@@ -60,19 +60,15 @@ def initialize_db():
 
 
 # Scraper l'article (récupérer uniquement le lien et la date)
-def fetch_article_link():
-    url = "https://www.lastampa.it/cronaca/"
+# Fonction pour récupérer un article de La Stampa
+def fetch_article():
+    url = "https://www.lastampa.it/"
     response = requests.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
-    
-    # Filtrer les liens contenant "/cronaca/" et vérifier s'ils ont une date et un ID d'article dans l'URL
-    links = [a['href'] for a in soup.find_all('a', href=True)]
-    
-    if links:
-        # Prendre le premier lien trouvé
-        article_link = links[2]
-        if article_link.startswith("/"):
-            article_link = f"https://{article_link}"
+    links = [a['href'] for a in soup.find_all('a', href=True) if '/cronaca/' in a['href']]
+
+    for link in links:
+        article_link = link if link.startswith("http") else f"https://www.lastampa.it{link}"
         
         
         
