@@ -113,32 +113,47 @@ elif st.session_state.page == 2:
 
 # PAGE 3: ARTICLE DU JOUR
 elif st.session_state.page == 3:
+    # Scraping et initialisation si nécessaire
     if st.session_state.article is None:
         title, content = scrape_article_content(st.session_state.link)
         sentences = nltk.sent_tokenize(content)
-        st.session_state.article = sentences
-        st.session_state.title = title
-        st.session_state.translations = [None] * len(sentences)
-        st.session_state.title_fr = translate_sentence(title)
 
-    # Affichage de l'article
-    st.title(st.session_state.title)
-    st.subheader(st.session_state.title_fr)
+        if not sentences:
+            st.error("Le contenu de l'article n'a pas pu être chargé.")
+        else:
+            st.session_state.article = sentences
+            st.session_state.title = title
+            st.session_state.translations = [None] * len(sentences)
+            st.session_state.title_fr = translate_sentence(title)
+
+    # Affichage du titre et lien vers l'article
+    st.title(st.session_state.title or "Titre non disponible")
+    st.subheader(st.session_state.title_fr or "Traduction indisponible")
     st.markdown(f"[Lien vers l'article]({st.session_state.link})")
 
-    for idx, sentence in enumerate(st.session_state.article):
-        cols = st.columns([2, 4])
-        with cols[0]:
-            if st.button(sentence, key=f"sentence_{idx}"):
-                if st.session_state.translations[idx] is None:
-                    st.session_state.translations[idx] = translate_sentence(sentence)
-                else:
-                    st.session_state.translations[idx] = None
-        with cols[1]:
-            translation = st.session_state.translations[idx]
-            if translation:
-                st.markdown(f"<p style='text-align:left; color: green;'>{translation}</p>", unsafe_allow_html=True)
+    # Affichage des phrases découpées sous forme de boutons
+    if st.session_state.article:
+        for idx, sentence in enumerate(st.session_state.article):
+            cols = st.columns([2, 4])  # Colonne pour le bouton et pour la traduction
+            with cols[0]:
+                # Bouton pour afficher ou cacher la traduction
+                if st.button(sentence, key=f"sentence_{idx}"):
+                    if st.session_state.translations[idx] is None:
+                        st.session_state.translations[idx] = translate_sentence(sentence)
+                    else:
+                        st.session_state.translations[idx] = None
+            with cols[1]:
+                # Affichage de la traduction si disponible
+                translation = st.session_state.translations[idx]
+                if translation:
+                    st.markdown(
+                        f"<p style='text-align:left; color: green;'>{translation}</p>",
+                        unsafe_allow_html=True,
+                    )
+    else:
+        st.warning("Aucune phrase à afficher pour cet article.")
 
+    # Bouton pour accéder au quiz
     if st.button("Lancer le quiz"):
         st.session_state.page = 5
 
