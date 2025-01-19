@@ -37,7 +37,8 @@ CREATE TABLE IF NOT EXISTS librairie_de_mots (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     result_id INTEGER,
     word TEXT,
-    correct TEXT,  -- "Vrai" ou "Faux"
+    correct TEXT,
+    correct_translation TEXT,
     FOREIGN KEY (result_id) REFERENCES results(id)
 )
 """)
@@ -181,20 +182,32 @@ if st.session_state.quiz_started and not st.session_state.quiz_submitted:
         st.session_state.quiz_answers[word] = st.text_input(f"Traduction de '{word}'", key=f"answer_{word}")
 
     if st.button('Résultats du test'):
-        score = 0
-        correct_answers = {}
-        for word, user_answer in st.session_state.quiz_answers.items():
-            correct_translation = translate_sentence(word).lower()
-            correct_answers[word] = correct_translation
-            if user_answer.strip().lower() == correct_translation:
-                score += 1
+    score = 0
+    correct_answers = {}
+    result_id = 1  # Exemple de récupération d'un ID de résultat. Adaptez-le selon votre logique.
+    
+    for word, user_answer in st.session_state.quiz_answers.items():
+        correct_translation = translate_sentence(word).lower()
+        correct_answers[word] = correct_translation
+        
+        # Déterminez si la réponse est correcte
+        correct = "Vrai" if user_answer.strip().lower() == correct_translation else "Faux"
+        
+        # Insertion dans la base de données
+        cursor.execute("""
+        INSERT INTO librairie_de_mots (result_id, word, correct, correct_translation)
+        VALUES (?, ?, ?, ?)
+        """, (result_id, word, correct, correct_translation))
+        
+        if correct == "Vrai":
+            score += 1
 
-        st.session_state.score = score
-        st.session_state.correct_answers = correct_answers
-        st.session_state.quiz_submitted = True
+    st.session_state.score = score
+    st.session_state.correct_answers = correct_answers
+    st.session_state.quiz_submitted = True
 
-        # Enregistrement des résultats
-        save_results(st.session_state.user_email, score, st.session_state.librairie_de_mots, st.session_state.correct_answers)
+    # Enregistrement des résultats
+    save_results(st.session_state.user_email, score, st.session_state.librairie_de_mots, st.session_state.correct_answers)
 
 
 # Résultats
