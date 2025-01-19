@@ -131,6 +131,25 @@ if 'translations' not in st.session_state:
 # Authentification par email
 st.session_state.user_email = st.text_input("Entrez votre adresse email pour commencer :", key="email")
 
+# Affichage de l'historique
+if st.button("Voir mon historique"):
+    # Récupérer les résultats de l'utilisateur depuis la base de données
+    cursor.execute("SELECT date, score FROM results WHERE email = ?", (st.session_state.user_email,))
+    results = cursor.fetchall()
+
+    # Convertir les résultats en DataFrame    
+    df = pd.DataFrame(results, columns=["Date", "Score"])
+
+    # Trier par date
+    df["Date"] = pd.to_datetime(df["Date"])
+    df = df.sort_values("Date")     
+
+    # Création du graphique lineplot
+    plt.figure(figsize=(10, 6))
+    sns.lineplot(data=df, x="Date", y="Score", marker='o')
+    plt.title("Évolution de vos scores au quiz")
+    plt.show()
+
 # Chargement d'un nouvel article
 if st.button("Charger un nouvel article"):
     title, link, article = fetch_article()
@@ -207,23 +226,7 @@ if st.session_state.quiz_submitted:
             st.markdown(f"❌ **{word}** : {correct_translation} (Votre réponse : {user_answer})")
 
 
-if st.button("Voir mon historique"):
-    # Récupérer les résultats de l'utilisateur depuis la base de données
-    cursor.execute("SELECT date, score FROM results WHERE email = ?", (st.session_state.user_email,))
-    results = cursor.fetchall()
 
-    # Convertir les résultats en DataFrame    
-    df = pd.DataFrame(results, columns=["Date", "Score"])
-
-    # Trier par date
-    df["Date"] = pd.to_datetime(df["Date"])
-    df = df.sort_values("Date")     
-
-    # Création du graphique lineplot
-    plt.figure(figsize=(10, 6))
-    sns.lineplot(data=df, x="Date", y="Score", marker='o')
-    plt.title("Évolution de vos scores au quiz")
-    plt.show()
 
 # Ajouter un bouton "Librairie" pour afficher ou masquer la liste des mots et leur traduction
 if 'show_librairie' not in st.session_state:
