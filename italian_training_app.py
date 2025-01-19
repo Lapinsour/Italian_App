@@ -149,7 +149,7 @@ def save_results(email, score, words, correct_answers):
     conn.commit()
 
 # Extraction de 10 mots aléatoires sans majuscules et stopwords
-def extract_random_words(text, n=10):
+def extract_random_words(text, n=20):
     stop_words_it = set(stopwords.words('italian'))
     words = word_tokenize(text.lower())
     words = [word for word in words if word.isalpha() and word not in stop_words_it]
@@ -236,7 +236,7 @@ if st.session_state.quiz_started and not st.session_state.quiz_submitted:
 
 # Résultats
 if st.session_state.quiz_submitted:
-    st.success(f"Votre score : {st.session_state.score}/10")
+    st.success(f"Votre score : {st.session_state.score}/20")
     st.subheader("Corrections :")
     for word, correct_translation in st.session_state.correct_answers.items():
         user_answer = st.session_state.quiz_answers[word]
