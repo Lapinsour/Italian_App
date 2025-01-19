@@ -6,15 +6,17 @@ import nltk
 import re
 import sqlite3
 from datetime import datetime
+import pandas as pd
+import matplotlib.pyplot as plt
 import random
 
 # Télécharger les ressources NLTK
 nltk.download('punkt')
 nltk.download('stopwords')
 from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize, sent_tokenize
+from nltk.tokenize import word_tokenize
 
-# Connexion à la base de données SQLite
+# Connexion à la base SQLite
 conn = sqlite3.connect('quiz_results.db')
 cursor = conn.cursor()
 
@@ -27,7 +29,6 @@ CREATE TABLE IF NOT EXISTS results (
     date TEXT
 )
 """)
-
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS quiz_words (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -36,10 +37,9 @@ CREATE TABLE IF NOT EXISTS quiz_words (
     FOREIGN KEY (result_id) REFERENCES results(id)
 )
 """)
-
 conn.commit()
 
-# Fonction pour récupérer un article de La Stampa
+# Fonction pour scrapper un article (exécutée une fois par jour)
 def fetch_article():
     url = "https://www.lastampa.it/"
     response = requests.get(url)
@@ -51,8 +51,8 @@ def fetch_article():
         article_resp = requests.get(article_url)
         article_soup = BeautifulSoup(article_resp.content, "html.parser")
         title = article_soup.find('h1').get_text(strip=True) if article_soup.find('h1') else "Titre non trouvé"
-
         story_div = article_soup.find('div', class_='story__text')
+
         if story_div:
             paragraphs = story_div.find_all('p')
             content = " ".join(p.get_text() for p in paragraphs)
@@ -60,125 +60,99 @@ def fetch_article():
                 return title, article_url, content
     return "Aucun article trouvé.", "", ""
 
-# Fonction pour découper le texte en phrases
-def split_into_sentences(text):
-    sentences = re.split(r'(?<=[.!?,]) +', text)
-    return sentences
-
-# Fonction de traduction d'une phrase
-def translate_sentence(sentence):
-    return GoogleTranslator(source='it', target='fr').translate(sentence)
-
-# Vérifie si l'utilisateur a déjà passé le test aujourd'hui
-def has_taken_test_today(email):
+# Récupérer ou stocker l'article du jour
+def get_daily_article():
     today = datetime.now().strftime("%Y-%m-%d")
-    cursor.execute("SELECT * FROM results WHERE email = ? AND date = ?", (email, today))
-    return cursor.fetchone() is not None
+    cursor.execute("SELECT * FROM daily_article WHERE date = ?", (today,))
+    row = cursor.fetchone()
+    if row:
+        return row[1], row[2], row[3]  # title, link, content
+    else:
+        title, link, content = fetch_article()
+        cursor.execute("INSERT INTO daily_article (date, title, link, content) VALUES (?, ?, ?, ?)",
+                       (today, title, link, content))
+        conn.commit()
+        return title, link, content
 
-# Sauvegarde des résultats du test
-def save_results(email, score, words):
-    date_today = datetime.now().strftime("%Y-%m-%d")
-    cursor.execute("INSERT INTO results (email, score, date) VALUES (?, ?, ?)", (email, score, date_today))
-    result_id = cursor.lastrowid
+# Fonction pour afficher les scores sous forme de graphique
+def plot_scores(email):
+    cursor.execute("SELECT date, score FROM results WHERE email = ? ORDER BY date", (email,))
+    data = cursor.fetchall()
+    if data:
+        df = pd.DataFrame(data, columns=["Date", "Score"])
+        plt.figure(figsize=(8, 5))
+        plt.plot(df["Date"], df["Score"], marker="o", linestyle="-", color="blue")
+        plt.title("Évolution des scores de quiz")
+        plt.xlabel("Date")
+        plt.ylabel("Score")
+        plt.xticks(rotation=45)
+        st.pyplot(plt)
+    else:
+        st.info("Aucun score enregistré pour le moment.")
 
-    for word in words:
-        cursor.execute("INSERT INTO quiz_words (result_id, word) VALUES (?, ?)", (result_id, word))
-
-    conn.commit()
-
-# Extraction de 10 mots aléatoires sans majuscules et stopwords
+# Fonction pour extraire des mots aléatoires
 def extract_random_words(text, n=10):
     stop_words_it = set(stopwords.words('italian'))
     words = word_tokenize(text.lower())
     words = [word for word in words if word.isalpha() and word not in stop_words_it]
     return random.sample(words, n) if len(words) >= n else words
 
-# Initialisation de la session state
-if 'translations' not in st.session_state:
-    st.session_state.translations = {}
-    st.session_state.article = None
-    st.session_state.title = ""
-    st.session_state.link = ""
-    st.session_state.quiz_words = []
-    st.session_state.quiz_answers = {}
-    st.session_state.quiz_started = False
-    st.session_state.quiz_submitted = False
-    st.session_state.score = 0
-    st.session_state.correct_answers = {}
+# Gestion des pages
+st.set_page_config(layout="wide")
+if 'page' not in st.session_state:
+    st.session_state.page = 1
+if 'article_data' not in st.session_state:
+    st.session_state.article_data = None
 
-# Authentification par email
-st.session_state.user_email = st.text_input("Entrez votre adresse email pour commencer :", key="email")
+# PAGE 1: ACCUEIL
+if st.session_state.page == 1:
+    st.title("Bienvenue dans l'application d'apprentissage")
+    email = st.text_input("Veuillez entrer votre adresse email pour continuer :")
+    if st.button("Poursuivre vers l'application"):
+        st.session_state.user_email = email
+        st.session_state.article_data = get_daily_article()
+        st.session_state.page = 2
 
-# Chargement d'un nouvel article
-if st.button("Charger un nouvel article"):
-    title, link, article = fetch_article()
-    title_fr = translate_sentence(title)
-    sentences = split_into_sentences(article)
-    st.session_state.article = sentences
-    st.session_state.translations = {i: None for i in range(len(sentences))}
-    st.session_state.title = title
-    st.session_state.title_fr = title_fr
-    st.session_state.link = link
+# PAGE 2: DASHBOARD
+elif st.session_state.page == 2:
+    st.title("Dashboard")
+    st.header(f"Bonjour, {st.session_state.user_email}")
+    st.subheader("Votre progression :")
+    plot_scores(st.session_state.user_email)
 
-# Affichage de l'article
-if st.session_state.article:
-    st.title(st.session_state.title)
-    st.subheader(st.session_state.title_fr)
-    st.markdown(f"[Lien vers l'article]({st.session_state.link})")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Poursuivre vers l'article du jour"):
+            st.session_state.page = 3
+    with col2:
+        if st.button("Révisions"):
+            st.session_state.page = 4
 
-    for idx, sentence in enumerate(st.session_state.article):
-        cols = st.columns([2, 4])
-        with cols[0]:
-            if st.button(sentence, key=f"sentence_{idx}"):
-                if st.session_state.translations[idx] is None:
-                    st.session_state.translations[idx] = translate_sentence(sentence)
-                else:
-                    st.session_state.translations[idx] = None
-        with cols[1]:
-            translation = st.session_state.translations[idx]
-            if translation:
-                st.markdown(f"<p style='text-align:left; color: green;'>{translation}</p>", unsafe_allow_html=True)
+# PAGE 3: ARTICLE DU JOUR
+elif st.session_state.page == 3:
+    title, link, content = st.session_state.article_data
+    st.title(title)
+    st.markdown(f"[Lire l'article original]({link})")
+    st.markdown(content)
 
-    # Lancer le quiz
-    if st.button("Commencer le test") and st.session_state.user_email:
-        if has_taken_test_today(st.session_state.user_email):
-            st.warning("Vous avez déjà passé le test aujourd'hui. Revenez demain !")
-        else:
-            article_text = " ".join(st.session_state.article)
-            st.session_state.quiz_words = extract_random_words(article_text, 10)
-            st.session_state.quiz_answers = {word: "" for word in st.session_state.quiz_words}
-            st.session_state.quiz_started = True
-            st.session_state.quiz_submitted = False
+    if st.button("Lancer le quiz"):
+        # Ajoute le code pour le quiz ici
+        pass
 
-# Quiz : traduire les mots
-if st.session_state.quiz_started and not st.session_state.quiz_submitted:
-    st.header("Quiz : Traduisez ces mots en français")
-    for word in st.session_state.quiz_words:
-        st.session_state.quiz_answers[word] = st.text_input(f"Traduction de '{word}'", key=f"answer_{word}")
+# PAGE 4: RÉVISIONS
+elif st.session_state.page == 4:
+    st.title("Révisions")
+    st.header("Liste des mots déjà rencontrés :")
+    cursor.execute("""
+    SELECT DISTINCT word FROM quiz_words 
+    INNER JOIN results ON quiz_words.result_id = results.id
+    WHERE email = ?
+    """, (st.session_state.user_email,))
+    words = cursor.fetchall()
+    if words:
+        st.write(", ".join(word[0] for word in words))
+    else:
+        st.info("Aucun mot enregistré pour le moment.")
 
-    if st.button("Résultats du test"):
-        score = 0
-        correct_answers = {}
-        for word, user_answer in st.session_state.quiz_answers.items():
-            correct_translation = translate_sentence(word).lower()
-            correct_answers[word] = correct_translation
-            if user_answer.strip().lower() == correct_translation:
-                score += 1
-
-        st.session_state.score = score
-        st.session_state.correct_answers = correct_answers
-        st.session_state.quiz_submitted = True
-
-        # Enregistrement des résultats
-        save_results(st.session_state.user_email, score, st.session_state.quiz_words)
-
-# Résultats
-if st.session_state.quiz_submitted:
-    st.success(f"Votre score : {st.session_state.score}/10")
-    st.subheader("Corrections :")
-    for word, correct_translation in st.session_state.correct_answers.items():
-        user_answer = st.session_state.quiz_answers[word]
-        if user_answer.strip().lower() == correct_translation:
-            st.markdown(f"✅ **{word}** : {correct_translation}")
-        else:
-            st.markdown(f"❌ **{word}** : {correct_translation} (Votre réponse : {user_answer})")
+    if st.button("Retour au tableau de bord"):
+        st.session_state.page = 2
