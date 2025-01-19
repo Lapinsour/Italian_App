@@ -101,7 +101,7 @@ def has_taken_test_today(email):
     :param email: Email de l'utilisateur.
     :return: True si le test a été passé aujourd'hui, False sinon.
     """
-    connection = sqlite3.connect("user_data.db")
+    connection = sqlite3.connect("quiz_results.db")
     cursor = connection.cursor()
     
     today = datetime.now().date().isoformat()
