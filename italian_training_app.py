@@ -148,7 +148,7 @@ if st.button("Voir mon historique"):
     plt.figure(figsize=(10, 6))
     sns.lineplot(data=df, x="Date", y="Score", marker='o')
     plt.title("Évolution de vos scores au quiz")
-    plt.show()
+    st.pyplot()
 
 # Chargement d'un nouvel article
 if st.button("Charger un nouvel article"):
