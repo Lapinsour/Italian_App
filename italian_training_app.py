@@ -71,7 +71,7 @@ def fetch_article_link():
     if links:
         # Prendre le premier lien trouvé
         article_link = links[2]
-         if article_link.startswith("/"):
+        if article_link.startswith("/"):
             article_link = f"https://{article_link}"
         
         
