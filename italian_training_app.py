@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS librairie_mots (
 conn.commit()
 
 cursor.execute("""
-DELETE FROM librairie_de_mots
+DELETE FROM librairie_mots
 WHERE correct_translation IS NULL
 """)
 
