@@ -43,10 +43,20 @@ CREATE TABLE IF NOT EXISTS librairie_mots (
 )
 """)
 conn.commit()
-
+# Nettoyage de la table librairie_mots
 cursor.execute("""
 DELETE FROM librairie_mots
 WHERE correct_translation IS NULL
+""")
+
+cursor.execute("""
+WITH duplicates AS (
+    SELECT MIN(id) AS keep_id
+    FROM librairie_mots
+    GROUP BY word, correct_translation
+)
+DELETE FROM librairie_de_mots
+WHERE id NOT IN (SELECT keep_id FROM duplicates)
 """)
 
 # Fonction pour récupérer un article de La Stampa
