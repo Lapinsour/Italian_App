@@ -131,25 +131,7 @@ if 'translations' not in st.session_state:
 # Authentification par email
 st.session_state.user_email = st.text_input("Entrez votre adresse email pour commencer :", key="email")
 
-# Affichage de l'historique
-if st.button("Voir mon historique"):
-    # Récupérer les résultats de l'utilisateur depuis la base de données
-    cursor.execute("SELECT date, score FROM results WHERE email = ?", (st.session_state.user_email,))
-    results = cursor.fetchall()
 
-    # Convertir les résultats en DataFrame    
-    df = pd.DataFrame(results, columns=["Date", "Score"])
-
-    # Trier par date
-    df["Date"] = pd.to_datetime(df["Date"])
-    df = df.sort_values("Date")     
-
-    # Création du graphique lineplot
-    
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.plot(df["Date"], df["Score"], marker='o')
-    ax.set_title("Évolution de vos scores au quiz")
-    st.pyplot(fig)
     
 # Chargement d'un nouvel article
 if st.button("Charger un nouvel article"):
@@ -249,3 +231,35 @@ if st.session_state.show_librairie:
     # Affichage du tableau des mots et traductions
     st.subheader("Librairie de mots et leurs traductions")
     st.dataframe(df_librairie)
+
+
+# Initialiser l'état du tableau dans st.session_state
+if 'show_history' not in st.session_state:
+    st.session_state.show_history = False  # Initialiser à False, c'est-à-dire masqué au départ
+
+# Affichage de l'historique
+if st.button("Voir mon historique"):
+    # Alterner l'état d'affichage du tableau
+    st.session_state.show_history = not st.session_state.show_history
+
+# Afficher l'historique si l'état est True
+if st.session_state.show_history:
+    # Récupérer les résultats de l'utilisateur depuis la base de données
+    cursor.execute("SELECT date, score FROM results WHERE email = ?", (st.session_state.user_email,))
+    results = cursor.fetchall()
+
+    # Convertir les résultats en DataFrame    
+    df = pd.DataFrame(results, columns=["Date", "Score"])
+
+    # Trier par date
+    df["Date"] = pd.to_datetime(df["Date"])
+    df = df.sort_values("Date")     
+
+    # Création du graphique lineplot
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.plot(df["Date"], df["Score"], marker='o')
+    ax.set_title("Évolution de vos scores au quiz")
+
+    # Affichage du graphique dans Streamlit
+    st.pyplot(fig)
+
