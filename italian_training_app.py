@@ -207,7 +207,7 @@ if st.session_state.quiz_started and not st.session_state.quiz_submitted:
         st.session_state.quiz_submitted = True
 
         # Enregistrement des résultats
-        save_results(st.session_state.user_email, score, st.session_state.librairie_mots, st.session_state.correct_answers)
+        #save_results(st.session_state.user_email, score, st.session_state.librairie_mots, st.session_state.correct_answers)
 
 
 # Résultats
