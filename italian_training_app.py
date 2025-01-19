@@ -14,38 +14,48 @@ nltk.download('punkt_tab')
 conn = sqlite3.connect('quiz_results.db')
 cursor = conn.cursor()
 
-# Création des tables si elles n'existent pas
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS results (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    email TEXT,
-    score INTEGER,
-    date TEXT
-)
-""")
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS scores (
-    email TEXT,
-    date TEXT,
-    score INTEGER
-)
-""")
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS quiz_words (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    result_id INTEGER,
-    word TEXT,
-    FOREIGN KEY (result_id) REFERENCES results(id)
-)
-""")
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS daily_article (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    date TEXT UNIQUE,
-    link TEXT
-)
-""")
-conn.commit()
+# Fonction pour initialiser la base de données
+def initialize_db():
+    # Connexion à la base SQLite
+    conn = sqlite3.connect('quiz_results.db')
+    cursor = conn.cursor()
+
+    # Création des tables si elles n'existent pas
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS results (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT,
+        score INTEGER,
+        date TEXT
+    )
+    """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS scores (
+        email TEXT,
+        date TEXT,
+        score INTEGER
+    )
+    """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS quiz_words (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        result_id INTEGER,
+        word TEXT,
+        FOREIGN KEY (result_id) REFERENCES results(id)
+    )
+    """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS daily_article (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        date TEXT UNIQUE,
+        link TEXT
+    )
+    """)
+    conn.commit()
+    conn.close()
+
+# Appelez cette fonction pour vous assurer que la base est correctement initialisée
+initialize_db()
 
 # Scraper l'article (récupérer uniquement le lien et la date)
 def fetch_article_link():
