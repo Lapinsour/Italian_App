@@ -8,7 +8,7 @@ from datetime import datetime
 import random
 
 # Télécharger les ressources NLTK
-nltk.download('punkt')
+nltk.download('punkt_tab')
 
 # Connexion à la base SQLite
 conn = sqlite3.connect('quiz_results.db')
