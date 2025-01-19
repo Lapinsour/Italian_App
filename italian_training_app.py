@@ -66,15 +66,13 @@ def fetch_article_link():
     soup = BeautifulSoup(response.content, "html.parser")
     
     # Filtrer les liens contenant "/cronaca/" et vérifier s'ils ont une date et un ID d'article dans l'URL
-    links = [a['href'] for a in soup.find_all('a', href=True) if '/cronaca/' in a['href'] and len(a['href'].split('/')) > 4]
+    links = [a['href'] for a in soup.find_all('a', href=True)]
     
     if links:
         # Prendre le premier lien trouvé
         article_link = links[0]
         
-        # Vérifier si l'URL est relative (si elle commence par '/')
-        if article_link.startswith("/"):
-            article_link = f"https://www.lastampa.it{article_link}"
+        
         
         return article_link
     return ""
