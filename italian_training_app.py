@@ -174,3 +174,61 @@ elif st.session_state.page == 4:
 
     if st.button("Retour au tableau de bord"):
         st.session_state.page = 2
+        
+# PAGE 5: QUIZZ
+elif st.session_state.page == 5:
+    # Vérification si l'utilisateur peut passer le quiz
+    st.header("Quiz : Traduisez ces mots en français")
+    if not st.session_state.user_email:
+        st.warning("Veuillez entrer votre adresse email sur la page d'accueil pour accéder au quiz.")
+        st.button("Retour à l'accueil", on_click=lambda: setattr(st.session_state, "page", 1))
+    elif has_taken_test_today(st.session_state.user_email):
+        st.warning("Vous avez déjà passé le test aujourd'hui. Revenez demain !")
+        st.button("Retour à la page 2", on_click=lambda: setattr(st.session_state, "page", 2))
+    else:
+        # Initialisation du quiz
+        if not st.session_state.quiz_started:
+            article_text = " ".join(st.session_state.article or [])
+            st.session_state.quiz_words = extract_random_words(article_text, 10)
+            st.session_state.quiz_answers = {word: "" for word in st.session_state.quiz_words}
+            st.session_state.quiz_started = True
+            st.session_state.quiz_submitted = False
+
+        # Affichage des questions du quiz
+        if not st.session_state.quiz_submitted:
+            for word in st.session_state.quiz_words:
+                st.session_state.quiz_answers[word] = st.text_input(
+                    f"Traduction de '{word}'", key=f"answer_{word}"
+                )
+
+            if st.button("Résultats du test"):
+                score = 0
+                correct_answers = {}
+                for word, user_answer in st.session_state.quiz_answers.items():
+                    correct_translation = translate_sentence(word).lower()
+                    correct_answers[word] = correct_translation
+                    if user_answer.strip().lower() == correct_translation:
+                        score += 1
+
+                st.session_state.score = score
+                st.session_state.correct_answers = correct_answers
+                st.session_state.quiz_submitted = True
+
+                # Enregistrement des résultats
+                save_results(st.session_state.user_email, score, st.session_state.quiz_words)
+
+        # Affichage des résultats du quiz
+        if st.session_state.quiz_submitted:
+            st.success(f"Votre score : {st.session_state.score}/10")
+            st.subheader("Corrections :")
+            for word, correct_translation in st.session_state.correct_answers.items():
+                user_answer = st.session_state.quiz_answers[word]
+                if user_answer.strip().lower() == correct_translation:
+                    st.markdown(f"✅ **{word}** : {correct_translation}")
+                else:
+                    st.markdown(
+                        f"❌ **{word}** : {correct_translation} (Votre réponse : {user_answer})"
+                    )
+            if st.button("Retour à la page 2"):
+                st.session_state.page = 2
+
