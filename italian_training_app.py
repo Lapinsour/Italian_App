@@ -259,6 +259,7 @@ if st.session_state.show_history:
     fig, ax = plt.subplots(figsize=(10, 6))
     ax.plot(df["Date"], df["Score"], marker='o')
     ax.set_title("Évolution de vos scores au quiz")
+    ax.set_ylim(0, 20)
 
     # Affichage du graphique dans Streamlit
     st.pyplot(fig)
