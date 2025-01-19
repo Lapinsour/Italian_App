@@ -228,29 +228,6 @@ if st.button("Voir mon historique"):
     sns.lineplot(data=df, x="Date", y="Score", marker='o')
     plt.title("Évolution de vos scores au quiz")
 
-# Connexion à la base de données SQLite
-conn = sqlite3.connect('votre_base_de_donnees.db')
-cursor = conn.cursor()
-
-# Récupérer les mots de la table "librairie_de_mots"
-cursor.execute("SELECT id, word, correct FROM librairie_de_mots")
-words = cursor.fetchall()
-
-# Créer un DataFrame pour afficher les mots
-df_librairie = pd.DataFrame(words, columns=["ID", "Mot", "Traduction actuelle"])
-
-# Afficher la liste des mots avec un champ de saisie pour chaque mot
-for index, row in df_librairie.iterrows():
-    # Ajouter un champ de saisie pour la traduction
-    traduction = st.text_input(f"Traduction pour '{row['Mot']}'", value=row['Traduction actuelle'], key=f"traduction_{row['ID']}")
-
-    # Ajouter un bouton de soumission pour chaque traduction
-    if st.button(f"Enregistrer la traduction pour '{row['Mot']}'", key=f"submit_{row['ID']}"):
-        # Mettre à jour la traduction dans la base de données
-        cursor.execute("UPDATE librairie_de_mots SET correct = ? WHERE id = ?", (traduction, row['ID']))
-        conn.commit()
-        st.success(f"La traduction de '{row['Mot']}' a été mise à jour.")
-
 # Ajouter un bouton "Librairie" pour afficher ou masquer la liste des mots et leur traduction
 if 'show_librairie' not in st.session_state:
     st.session_state.show_librairie = False  # Initialiser l'état du tableau
@@ -261,6 +238,13 @@ if st.button("Librairie"):
 
 # Afficher ou masquer le tableau en fonction de l'état
 if st.session_state.show_librairie:
+    # Récupérer les mots et leur traduction depuis la base de données
+    cursor.execute("SELECT word, correct FROM librairie_de_mots")
+    words = cursor.fetchall()
+
+    # Convertir les résultats en DataFrame pour un affichage plus propre
+    df_librairie = pd.DataFrame(words, columns=["Mot", "Traduction"])
+
     # Affichage du tableau des mots et traductions
     st.subheader("Librairie de mots et leurs traductions")
     st.dataframe(df_librairie)
