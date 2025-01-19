@@ -207,7 +207,7 @@ if st.session_state.article:
             st.warning("Vous avez déjà passé le test aujourd'hui. Revenez demain !")
         else:
             article_text = " ".join(st.session_state.article)
-            st.session_state.quiz_words = extract_random_words(article_text, 10)
+            st.session_state.quiz_words = extract_random_words(article_text, 20)
             st.session_state.quiz_answers = {word: "" for word in st.session_state.quiz_words}
             st.session_state.quiz_started = True
             st.session_state.quiz_submitted = False
