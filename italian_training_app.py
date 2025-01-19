@@ -63,16 +63,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Utilisation des classes CSS pour les boutons
-if st.button("Commencer le test", key="start_test", help="Démarre le test de traduction", use_container_width=True):
-    st.markdown('<button class="test-button">Commencer le test</button>', unsafe_allow_html=True)
-
-if st.button("Voir mon historique", key="view_history", help="Consulter votre historique de résultats", use_container_width=True):
-    st.markdown('<button class="history-button">Voir mon historique</button>', unsafe_allow_html=True)
-
-# Si d'autres boutons sont utilisés, ils pourront avoir un style différent
-if st.button("Un autre bouton", key="default_button"):
-    st.markdown('<button class="default-button">Un autre bouton</button>', unsafe_allow_html=True)
 
 
 # Connexion à la base de données SQLite
