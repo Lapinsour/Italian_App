@@ -70,7 +70,7 @@ def fetch_article_link():
         # Vérifier si le lien est complet ou non, sinon le compléter avec le domaine principal
         article_link = links[0]
         if not article_link.startswith("http"):
-            article_link = f"https://www.lastampa.it{article_link}"
+            article_link = f"https:{article_link}"
         return article_link
     return ""
 
