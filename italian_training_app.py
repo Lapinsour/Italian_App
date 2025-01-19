@@ -36,7 +36,15 @@ CREATE TABLE IF NOT EXISTS quiz_words (
     FOREIGN KEY (result_id) REFERENCES results(id)
 )
 """)
-
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS quiz_words (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    result_id INTEGER,
+    word TEXT,
+    correct TEXT,  -- "Vrai" ou "Faux"
+    FOREIGN KEY (result_id) REFERENCES results(id)
+)
+""")
 conn.commit()
 
 # Fonction pour récupérer un article de La Stampa
@@ -76,13 +84,16 @@ def has_taken_test_today(email):
     return cursor.fetchone() is not None
 
 # Sauvegarde des résultats du test
-def save_results(email, score, words):
+def save_results(email, score, words, correct_answers):
     date_today = datetime.now().strftime("%Y-%m-%d")
     cursor.execute("INSERT INTO results (email, score, date) VALUES (?, ?, ?)", (email, score, date_today))
     result_id = cursor.lastrowid
 
     for word in words:
-        cursor.execute("INSERT INTO quiz_words (result_id, word) VALUES (?, ?)", (result_id, word))
+        correct_translation = correct_answers.get(word, "")
+        # Enregistrement des mots et des traductions avec le résultat Vrai/Faux
+        correct = "Vrai" if correct_translation.lower() == user_answer.lower() else "Faux"
+        cursor.execute("INSERT INTO quiz_words (result_id, word, correct) VALUES (?, ?, ?)", (result_id, word, correct))
 
     conn.commit()
 
@@ -182,3 +193,30 @@ if st.session_state.quiz_submitted:
             st.markdown(f"✅ **{word}** : {correct_translation}")
         else:
             st.markdown(f"❌ **{word}** : {correct_translation} (Votre réponse : {user_answer})")
+
+
+if st.button("Voir mon historique"):
+    # Récupérer les résultats de l'utilisateur depuis la base de données
+    cursor.execute("SELECT date, score FROM results WHERE email = ?", (st.session_state.user_email,))
+    results = cursor.fetchall()
+
+    # Convertir les résultats en DataFrame
+    import pandas as pd
+    df = pd.DataFrame(results, columns=["Date", "Score"])
+
+    # Trier par date
+    df["Date"] = pd.to_datetime(df["Date"])
+    df = df.sort_values("Date")
+
+    # Affichage du graphique
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+
+    # Création du graphique lineplot
+    plt.figure(figsize=(10, 6))
+    sns.lineplot(data=df, x="Date", y="Score", marker='o')
+    plt.title("Évolution de vos scores au quiz")
+    plt.xlabel("Date")
+    plt.ylabel("Score")
+    plt.xticks(rotation=45)
+    st.pyplot(plt)
