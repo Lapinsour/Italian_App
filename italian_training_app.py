@@ -162,7 +162,7 @@ if st.session_state.article:
             translation = st.session_state.translations[idx]
             if translation:
                 st.markdown(f"<p style='text-align:left; color: green;'>{translation}</p>", unsafe_allow_html=True)
-
+    st.subheader("Exerce-toi")
     # Lancer le quiz
     if st.button('Commencer le test') and st.session_state.user_email:
         if has_taken_test_today(st.session_state.user_email):
