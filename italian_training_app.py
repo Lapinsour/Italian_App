@@ -62,9 +62,16 @@ def fetch_article_link():
     url = "https://www.lastampa.it/"
     response = requests.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
+    
+    # Filtrer les liens contenant "/cronaca/"
     links = [a['href'] for a in soup.find_all('a', href=True) if '/cronaca/' in a['href']]
+    
     if links:
-        return links[0] if links[0].startswith("http") else f"https://www.lastampa.it{links[0]}"
+        # Vérifier si le lien est complet ou non, sinon le compléter avec le domaine principal
+        article_link = links[0]
+        if not article_link.startswith("http"):
+            article_link = f"https://www.lastampa.it{article_link}"
+        return article_link
     return ""
 
 # Sauvegarder ou récupérer le lien de l'article pour la date du jour
