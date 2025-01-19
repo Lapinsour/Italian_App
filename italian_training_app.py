@@ -235,7 +235,7 @@ if st.button("Librairie"):
 # Afficher ou masquer le tableau en fonction de l'état
 if st.session_state.show_librairie:
     # Récupérer les mots et leur traduction depuis la base de données
-    cursor.execute("SELECT word, correct_translation FROM librairie_mots")
+    cursor.execute("SELECT word, correct_translation FROM librairie_mots ORDER BY word")
     words = cursor.fetchall()
 
     # Convertir les résultats en DataFrame pour un affichage plus propre
