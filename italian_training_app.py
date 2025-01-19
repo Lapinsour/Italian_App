@@ -14,6 +14,67 @@ nltk.download('stopwords')
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize, sent_tokenize
 
+# Ajouter des styles CSS personnalisés
+st.markdown("""
+    <style>
+        .test-button {
+            background-color: #4CAF50;
+            color: white;
+            font-size: 16px;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        
+        .test-button:hover {
+            background-color: #45a049;
+        }
+        
+        .history-button {
+            background-color: #008CBA;
+            color: white;
+            font-size: 16px;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        
+        .history-button:hover {
+            background-color: #007bb5;
+        }
+
+        .default-button {
+            background-color: #f1f1f1;
+            color: black;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            padding: 8px 16px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .default-button:hover {
+            background-color: #ddd;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# Utilisation des classes CSS pour les boutons
+if st.button("Commencer le test", key="start_test", help="Démarre le test de traduction", use_container_width=True):
+    st.markdown('<button class="test-button">Commencer le test</button>', unsafe_allow_html=True)
+
+if st.button("Voir mon historique", key="view_history", help="Consulter votre historique de résultats", use_container_width=True):
+    st.markdown('<button class="history-button">Voir mon historique</button>', unsafe_allow_html=True)
+
+# Si d'autres boutons sont utilisés, ils pourront avoir un style différent
+if st.button("Un autre bouton", key="default_button"):
+    st.markdown('<button class="default-button">Un autre bouton</button>', unsafe_allow_html=True)
+
+
 # Connexion à la base de données SQLite
 conn = sqlite3.connect('quiz_results.db')
 cursor = conn.cursor()
