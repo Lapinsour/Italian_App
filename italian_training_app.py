@@ -7,6 +7,9 @@ import re
 import sqlite3
 from datetime import datetime
 import random
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 # Télécharger les ressources NLTK
 nltk.download('punkt_tab')
@@ -210,7 +213,7 @@ if st.button("Voir mon historique"):
     results = cursor.fetchall()
 
     # Convertir les résultats en DataFrame
-    import pandas as pd
+    
     df = pd.DataFrame(results, columns=["Date", "Score"])
 
     # Trier par date
@@ -218,8 +221,7 @@ if st.button("Voir mon historique"):
     df = df.sort_values("Date")
 
     # Affichage du graphique
-    import seaborn as sns
-    import matplotlib.pyplot as plt
+    
 
     # Création du graphique lineplot
     plt.figure(figsize=(10, 6))
