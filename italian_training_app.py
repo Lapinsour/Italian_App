@@ -212,7 +212,7 @@ if st.session_state.article:
                 st.markdown(f"<p style='text-align:left; color: green;'>{translation}</p>", unsafe_allow_html=True)
 
     # Lancer le quiz
-    if st.button("Commencer le test") and st.session_state.user_email:
+    if st.markdown('<button class="test-button">Commencer le test</button>', unsafe_allow_html=True) and st.session_state.user_email:
         if has_taken_test_today(st.session_state.user_email):
             st.warning("Vous avez déjà passé le test aujourd'hui. Revenez demain !")
         else:
