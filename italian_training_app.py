@@ -223,6 +223,7 @@ if st.button("Voir mon historique"):
     plt.figure(figsize=(10, 6))
     sns.lineplot(data=df, x="Date", y="Score", marker='o')
     plt.title("Évolution de vos scores au quiz")
+    plt.show()
 
 # Ajouter un bouton "Librairie" pour afficher ou masquer la liste des mots et leur traduction
 if 'show_librairie' not in st.session_state:
