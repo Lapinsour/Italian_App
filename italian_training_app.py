@@ -94,7 +94,7 @@ def has_taken_test_today(email):
     connection = sqlite3.connect("user_data.db")
     cursor = connection.cursor()
     
-    today = datetime.date.today().isoformat()
+    today = datetime.now().date().isoformat()
 
     # Rechercher si l'utilisateur a un score enregistré pour aujourd'hui
     cursor.execute(
