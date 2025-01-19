@@ -37,6 +37,17 @@ CREATE TABLE IF NOT EXISTS quiz_words (
     FOREIGN KEY (result_id) REFERENCES results(id)
 )
 """)
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS daily_article (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date TEXT UNIQUE,
+    title TEXT,
+    link TEXT,
+    content TEXT
+)
+""")
+
 conn.commit()
 
 # Fonction pour scrapper un article (exécutée une fois par jour)
