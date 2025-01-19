@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS results (
 """)
 
 cursor.execute("""
-CREATE TABLE IF NOT EXISTS librairie_de_mots (
+CREATE TABLE IF NOT EXISTS librairie_mots (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     result_id INTEGER,
     word TEXT,
@@ -90,7 +90,7 @@ def save_results(email, score, words, correct_answers):
         correct_translation = correct_answers.get(word, "")
         # Enregistrement des mots et des traductions avec le résultat Vrai/Faux
         correct = "Vrai" if correct_translation.lower() == user_answer.lower() else "Faux"
-        cursor.execute("INSERT INTO librairie_de_mots (result_id, word, correct) VALUES (?, ?, ?)", (result_id, word, correct))
+        cursor.execute("INSERT INTO librairie_mots (result_id, word, correct) VALUES (?, ?, ?)", (result_id, word, correct))
 
     conn.commit()
 
@@ -122,7 +122,7 @@ if 'translations' not in st.session_state:
     st.session_state.article = None
     st.session_state.title = ""
     st.session_state.link = ""
-    st.session_state.librairie_de_mots = []
+    st.session_state.librairie_mots = []
     st.session_state.quiz_answers = {}
     st.session_state.quiz_started = False
     st.session_state.quiz_submitted = False
@@ -170,15 +170,15 @@ if st.session_state.article:
             st.warning("Vous avez déjà passé le test aujourd'hui. Revenez demain !")
         else:
             article_text = " ".join(st.session_state.article)
-            st.session_state.librairie_de_mots = extract_random_words(article_text, 20)
-            st.session_state.quiz_answers = {word: "" for word in st.session_state.librairie_de_mots}
+            st.session_state.librairie_mots = extract_random_words(article_text, 20)
+            st.session_state.quiz_answers = {word: "" for word in st.session_state.librairie_mots}
             st.session_state.quiz_started = True
             st.session_state.quiz_submitted = False
 
 # Quiz : traduire les mots
 if st.session_state.quiz_started and not st.session_state.quiz_submitted:
     st.header("Quiz : Traduisez ces mots en français")
-    for word in st.session_state.librairie_de_mots:
+    for word in st.session_state.librairie_mots:
         st.session_state.quiz_answers[word] = st.text_input(f"Traduction de '{word}'", key=f"answer_{word}")
 
     if st.button('Résultats du test'):
@@ -195,7 +195,7 @@ if st.session_state.quiz_started and not st.session_state.quiz_submitted:
             
             # Insertion dans la base de données
             cursor.execute("""
-            INSERT INTO librairie_de_mots (result_id, word, correct, correct_translation)
+            INSERT INTO librairie_mots (result_id, word, correct, correct_translation)
             VALUES (?, ?, ?, ?)
             """, (result_id, word, correct, correct_translation))
             
@@ -207,7 +207,7 @@ if st.session_state.quiz_started and not st.session_state.quiz_submitted:
         st.session_state.quiz_submitted = True
 
         # Enregistrement des résultats
-        save_results(st.session_state.user_email, score, st.session_state.librairie_de_mots, st.session_state.correct_answers)
+        save_results(st.session_state.user_email, score, st.session_state.librairie_mots, st.session_state.correct_answers)
 
 
 # Résultats
@@ -235,7 +235,7 @@ if st.button("Librairie"):
 # Afficher ou masquer le tableau en fonction de l'état
 if st.session_state.show_librairie:
     # Récupérer les mots et leur traduction depuis la base de données
-    cursor.execute("SELECT word, correct_translation FROM librairie_de_mots")
+    cursor.execute("SELECT word, correct_translation FROM librairie_mots")
     words = cursor.fetchall()
 
     # Convertir les résultats en DataFrame pour un affichage plus propre
