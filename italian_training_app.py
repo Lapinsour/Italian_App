@@ -58,33 +58,21 @@ def initialize_db():
 
 
 # Scraper l'article (récupérer uniquement le lien et la date)
+# Scraper l'article (récupérer uniquement le lien et la date)
 def fetch_article_link():
     url = "https://www.lastampa.it/"
     response = requests.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
     
-    # Filtrer les liens contenant "/esteri/" ou d'autres sections pertinentes
-    links = [a['href'] for a in soup.find_all('a', href=True) if '/esteri/' in a['href'] or '/cronaca/' in a['href']]
+    # Filtrer les liens contenant "/cronaca/" et vérifier s'ils ont une date et un ID d'article dans l'URL
+    links = [a['href'] for a in soup.find_all('a', href=True) if '/cronaca/' in a['href'] and len(a['href'].split('/')) > 4]
     
     if links:
-        # Vérifier si le lien est complet ou non, sinon le compléter avec le domaine principal
+        # Prendre le premier lien trouvé et s'assurer qu'il commence par "http"
         article_link = links[0]
         if not article_link.startswith("http"):
-            article_link = f"https:{article_link}"
+            article_link = f"https://www.lastampa.it{article_link}"
         return article_link
-
-    for link in links:        
-        article_resp = requests.get(article_link)
-        article_soup = BeautifulSoup(article_resp.content, "html.parser")
-        title = article_soup.find('h1').get_text(strip=True) if article_soup.find('h1') else "Titre non trouvé"
-
-        story_div = article_soup.find('div', class_='story__text')
-        if story_div:
-            paragraphs = story_div.find_all('p')
-            content = " ".join(p.get_text() for p in paragraphs)
-            if 3000 <= len(content) <= 5000:
-                return title, article_url, content
-    return "Aucun article trouvé.", "", "", ""
     return ""
 
 # Sauvegarder ou récupérer le lien de l'article pour la date du jour
