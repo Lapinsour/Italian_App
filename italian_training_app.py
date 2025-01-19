@@ -24,6 +24,13 @@ CREATE TABLE IF NOT EXISTS results (
 )
 """)
 cursor.execute("""
+CREATE TABLE IF NOT EXISTS scores (
+    email TEXT,
+    date TEXT,
+    score INTEGER
+)
+""")
+cursor.execute("""
 CREATE TABLE IF NOT EXISTS quiz_words (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     result_id INTEGER,
@@ -76,6 +83,32 @@ def scrape_article_content(link):
 # Traduire une phrase
 def translate_sentence(sentence):
     return GoogleTranslator(source='it', target='fr').translate(sentence)
+
+# Vérifier si l'user a déjà passé le test aujourd'hui
+def has_taken_test_today(email):
+    """
+    Vérifie si un utilisateur a déjà passé le test aujourd'hui.
+    :param email: Email de l'utilisateur.
+    :return: True si le test a été passé aujourd'hui, False sinon.
+    """
+    connection = sqlite3.connect("user_data.db")
+    cursor = connection.cursor()
+    
+    today = datetime.date.today().isoformat()
+
+    # Rechercher si l'utilisateur a un score enregistré pour aujourd'hui
+    cursor.execute(
+        """
+        SELECT COUNT(*) 
+        FROM scores 
+        WHERE email = ? AND date = ?
+        """, 
+        (email, today)
+    )
+    result = cursor.fetchone()[0]
+
+    connection.close()
+    return result > 0
 
 # Gestion des pages
 st.set_page_config(layout="wide")
