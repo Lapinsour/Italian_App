@@ -44,6 +44,11 @@ CREATE TABLE IF NOT EXISTS librairie_mots (
 """)
 conn.commit()
 
+cursor.execute("""
+DELETE FROM librairie_de_mots
+WHERE correct_translation IS NULL
+""")
+
 # Fonction pour récupérer un article de La Stampa
 def fetch_article():
     url = "https://www.lastampa.it/"
