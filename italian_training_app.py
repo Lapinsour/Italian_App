@@ -14,56 +14,6 @@ nltk.download('stopwords')
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize, sent_tokenize
 
-# Ajouter des styles CSS personnalisés
-st.markdown("""
-    <style>
-        .test-button {
-            background-color: #4CAF50;
-            color: white;
-            font-size: 16px;
-            border: none;
-            padding: 10px 20px;
-            cursor: pointer;
-            border-radius: 5px;
-            margin-top: 20px;
-        }
-        
-        .test-button:hover {
-            background-color: #45a049;
-        }
-        
-        .history-button {
-            background-color: #008CBA;
-            color: white;
-            font-size: 16px;
-            border: none;
-            padding: 10px 20px;
-            cursor: pointer;
-            border-radius: 5px;
-            margin-top: 20px;
-        }
-        
-        .history-button:hover {
-            background-color: #007bb5;
-        }
-
-        .default-button {
-            background-color: #f1f1f1;
-            color: black;
-            font-size: 14px;
-            border: 1px solid #ccc;
-            padding: 8px 16px;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-
-        .default-button:hover {
-            background-color: #ddd;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
-
 
 # Connexion à la base de données SQLite
 conn = sqlite3.connect('quiz_results.db')
@@ -80,15 +30,7 @@ CREATE TABLE IF NOT EXISTS results (
 """)
 
 cursor.execute("""
-CREATE TABLE IF NOT EXISTS quizz_words (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    result_id INTEGER,
-    word TEXT,
-    FOREIGN KEY (result_id) REFERENCES results(id)
-)
-""")
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS quizz_words (
+CREATE TABLE IF NOT EXISTS librairie_de_mots (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     result_id INTEGER,
     word TEXT,
@@ -144,7 +86,7 @@ def save_results(email, score, words, correct_answers):
         correct_translation = correct_answers.get(word, "")
         # Enregistrement des mots et des traductions avec le résultat Vrai/Faux
         correct = "Vrai" if correct_translation.lower() == user_answer.lower() else "Faux"
-        cursor.execute("INSERT INTO quizz_words (result_id, word, correct) VALUES (?, ?, ?)", (result_id, word, correct))
+        cursor.execute("INSERT INTO librairie_de_mots (result_id, word, correct) VALUES (?, ?, ?)", (result_id, word, correct))
 
     conn.commit()
 
@@ -176,7 +118,7 @@ if 'translations' not in st.session_state:
     st.session_state.article = None
     st.session_state.title = ""
     st.session_state.link = ""
-    st.session_state.quizz_words = []
+    st.session_state.librairie_de_mots = []
     st.session_state.quiz_answers = {}
     st.session_state.quiz_started = False
     st.session_state.quiz_submitted = False
@@ -222,15 +164,15 @@ if st.session_state.article:
             st.warning("Vous avez déjà passé le test aujourd'hui. Revenez demain !")
         else:
             article_text = " ".join(st.session_state.article)
-            st.session_state.quizz_words = extract_random_words(article_text, 20)
-            st.session_state.quiz_answers = {word: "" for word in st.session_state.quizz_words}
+            st.session_state.librairie_de_mots = extract_random_words(article_text, 20)
+            st.session_state.quiz_answers = {word: "" for word in st.session_state.librairie_de_mots}
             st.session_state.quiz_started = True
             st.session_state.quiz_submitted = False
 
 # Quiz : traduire les mots
 if st.session_state.quiz_started and not st.session_state.quiz_submitted:
     st.header("Quiz : Traduisez ces mots en français")
-    for word in st.session_state.quizz_words:
+    for word in st.session_state.librairie_de_mots:
         st.session_state.quiz_answers[word] = st.text_input(f"Traduction de '{word}'", key=f"answer_{word}")
 
     if st.button('Résultats du test'):
@@ -247,7 +189,7 @@ if st.session_state.quiz_started and not st.session_state.quiz_submitted:
         st.session_state.quiz_submitted = True
 
         # Enregistrement des résultats
-        save_results(st.session_state.user_email, score, st.session_state.quizz_words, st.session_state.correct_answers)
+        save_results(st.session_state.user_email, score, st.session_state.librairie_de_mots, st.session_state.correct_answers)
 
 
 # Résultats
