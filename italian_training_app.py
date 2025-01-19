@@ -130,9 +130,10 @@ if 'page' not in st.session_state:
     st.session_state.link = None
     st.session_state.title_fr = None
 
+initialize_db()
 # PAGE 1: ACCUEIL
 if st.session_state.page == 1:
-    initialize_db()
+    
     st.title("Bienvenue dans l'application d'apprentissage")
     email = st.text_input("Veuillez entrer votre adresse email pour continuer :")
     if st.button("Poursuivre vers l'application"):
