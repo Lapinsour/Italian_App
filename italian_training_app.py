@@ -72,6 +72,19 @@ def fetch_article_link():
         if not article_link.startswith("http"):
             article_link = f"https:{article_link}"
         return article_link
+
+    for link in links:        
+        article_resp = requests.get(article_link)
+        article_soup = BeautifulSoup(article_resp.content, "html.parser")
+        title = article_soup.find('h1').get_text(strip=True) if article_soup.find('h1') else "Titre non trouvé"
+
+        story_div = article_soup.find('div', class_='story__text')
+        if story_div:
+            paragraphs = story_div.find_all('p')
+            content = " ".join(p.get_text() for p in paragraphs)
+            if 3000 <= len(content) <= 5000:
+                return title, article_url, content
+    return "Aucun article trouvé.", "", "", ""
     return ""
 
 # Sauvegarder ou récupérer le lien de l'article pour la date du jour
