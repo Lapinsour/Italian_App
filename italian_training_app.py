@@ -145,11 +145,12 @@ if st.button("Voir mon historique"):
     df = df.sort_values("Date")     
 
     # Création du graphique lineplot
-    plt.figure(figsize=(10, 6))
-    sns.lineplot(data=df, x="Date", y="Score", marker='o')
-    plt.title("Évolution de vos scores au quiz")
-    st.pyplot()
-
+    
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.plot(df["Date"], df["Score"], marker='o')
+    ax.set_title("Évolution de vos scores au quiz")
+    st.pyplot(fig)
+    
 # Chargement d'un nouvel article
 if st.button("Charger un nouvel article"):
     title, link, article = fetch_article()
