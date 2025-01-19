@@ -228,7 +228,7 @@ if st.session_state.quiz_started and not st.session_state.quiz_submitted:
     for word in st.session_state.quiz_words:
         st.session_state.quiz_answers[word] = st.text_input(f"Traduction de '{word}'", key=f"answer_{word}")
 
-    if st.button("Résultats du test"):
+    if st.markdown('<button class="history-button">Résultats du test</button>', unsafe_allow_html=True):
         score = 0
         correct_answers = {}
         for word, user_answer in st.session_state.quiz_answers.items():
@@ -256,7 +256,7 @@ if st.session_state.quiz_submitted:
             st.markdown(f"❌ **{word}** : {correct_translation} (Votre réponse : {user_answer})")
 
 
-if st.button("Voir mon historique"):
+if st.markdown('<button class="history-button">Voir mon historique</button>', unsafe_allow_html=True):
     # Récupérer les résultats de l'utilisateur depuis la base de données
     cursor.execute("SELECT date, score FROM results WHERE email = ?", (st.session_state.user_email,))
     results = cursor.fetchall()
