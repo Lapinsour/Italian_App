@@ -212,16 +212,12 @@ if st.button("Voir mon historique"):
     cursor.execute("SELECT date, score FROM results WHERE email = ?", (st.session_state.user_email,))
     results = cursor.fetchall()
 
-    # Convertir les résultats en DataFrame
-    
+    # Convertir les résultats en DataFrame    
     df = pd.DataFrame(results, columns=["Date", "Score"])
 
     # Trier par date
     df["Date"] = pd.to_datetime(df["Date"])
-    df = df.sort_values("Date")
-
-    # Affichage du graphique
-    
+    df = df.sort_values("Date")     
 
     # Création du graphique lineplot
     plt.figure(figsize=(10, 6))
