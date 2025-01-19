@@ -148,12 +148,27 @@ def save_results(email, score, words, correct_answers):
 
     conn.commit()
 
-# Extraction de 10 mots aléatoires sans majuscules et stopwords
+
+
+
+# Extraction de 20 mots aléatoires sans majuscules et stopwords, avec élimination des doublons
 def extract_random_words(text, n=20):
+    # Téléchargement des stopwords si nécessaire
+    nltk.download('punkt')
+    nltk.download('stopwords')
+
     stop_words_it = set(stopwords.words('italian'))
     words = word_tokenize(text.lower())
+
+    # Filtrer les mots qui sont alphabétiques et non-stopwords
     words = [word for word in words if word.isalpha() and word not in stop_words_it]
-    return random.sample(words, n) if len(words) >= n else words
+    
+    # Utiliser un set pour enlever les doublons
+    unique_words = list(set(words))
+    
+    # Si le nombre de mots uniques est inférieur à n, retourner tous les mots uniques
+    return random.sample(unique_words, n) if len(unique_words) >= n else unique_words
+
 
 # Initialisation de la session state
 if 'translations' not in st.session_state:
