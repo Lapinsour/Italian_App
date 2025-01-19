@@ -197,16 +197,17 @@ elif st.session_state.page == 3:
     else:
         st.warning("Aucune phrase à afficher pour cet article.")
 
-    # Vérifier si l'utilisateur a déjà pris le test aujourd'hui
-    if has_taken_test_today(st.session_state.user_email):
-        st.warning("Vous avez déjà passé le test aujourd'hui. Revenez demain !")
-        st.session_state.page = 2
+   
 
     # Bouton pour accéder au quiz
     if st.button("Lancer le quiz"):
         st.session_state.page = 5
 
 # PAGE 4: RÉVISIONS
+# Vérifier si l'utilisateur a déjà pris le test aujourd'hui
+if has_taken_test_today(st.session_state.user_email):
+    st.warning("Vous avez déjà passé le test aujourd'hui. Revenez demain !")
+    st.session_state.page = 2
 elif st.session_state.page == 4:
     st.title("Révisions")
     st.header("Liste des mots déjà rencontrés :")
