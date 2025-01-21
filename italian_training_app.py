@@ -51,26 +51,25 @@ WHERE correct_translation IS NULL
 
 
 conn.commit()
-# Fonction pour récupérer un article de La Stampa
-def fetch_article():
-    url = "https://www.lastampa.it/"
+
+# Fonction pour récupérer le poème
+def fetch_poem():
+    url = "https://www.wikipoesia.it/wiki/%27A_Mamma_(La_Mamma)"
     response = requests.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
-    links = [a['href'] for a in soup.find_all('a', href=True) if '/cronaca/' in a['href']]
 
-    for link in links:
-        article_url = link if link.startswith("http") else f"https://www.lastampa.it{link}"
-        article_resp = requests.get(article_url)
-        article_soup = BeautifulSoup(article_resp.content, "html.parser")
-        title = article_soup.find('h1').get_text(strip=True) if article_soup.find('h1') else "Titre non trouvé"
+    # Récupérer le titre
+    title = soup.find('h1', class_='firstHeading').get_text(strip=True)
 
-        story_div = article_soup.find('div', class_='story__text')
-        if story_div:
-            paragraphs = story_div.find_all('p')
-            content = " ".join(p.get_text() for p in paragraphs)
-            if 3000 <= len(content) <= 5000:
-                return title, article_url, content
-    return "Aucun article trouvé.", "", ""
+    # Récupérer le contenu du poème
+    content_div = soup.find('div', class_='mw-parser-output')
+    if content_div:
+        paragraphs = content_div.find_all('p', recursive=False)
+        content = " ".join(p.get_text(strip=True) for p in paragraphs if p.get_text(strip=True))
+        if content:
+            return title, url, content
+    
+    return "Poème non trouvé.", "", ""
 
 # Fonction pour découper le texte en phrases
 def split_into_sentences(text):
@@ -143,14 +142,14 @@ st.session_state.user_email = st.text_input("Entrez votre adresse email pour com
     
 # Chargement d'un nouvel article
 if st.button("Charger un nouvel article"):
-    title, link, article = fetch_article()
+    title, url, content = fetch_poem()
     title_fr = translate_sentence(title)
     sentences = split_into_sentences(article)
-    st.session_state.article = sentences
+    st.session_state.article = split_into_sentences(content)
     st.session_state.translations = {i: None for i in range(len(sentences))}
     st.session_state.title = title
     st.session_state.title_fr = title_fr
-    st.session_state.link = link
+    st.session_state.link = url
 
 # Affichage de l'article
 if st.session_state.article:
