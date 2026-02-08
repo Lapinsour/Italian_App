@@ -35,7 +35,7 @@ def fetch_article_italian():
     return "Aucun article trouvé.", "", ""
 
 
-# ---- FRANÇAIS : 20Minutes ----
+# ---- FRANÇAIS : France24 ----
 def fetch_article_french():
     url = "https://www.france24.com/fr/france/"
     response = requests.get(url)
