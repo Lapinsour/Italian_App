@@ -36,48 +36,39 @@ def fetch_article_italian():
 
 
 # ---- FRANÇAIS : 20Minutes ----
-def fetch_article_20minutes():
-    url = "https://www.20minutes.fr/"
+def fetch_article_french():
+    url = "https://www.france24.com/fr/france/"
     response = requests.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
 
-    # Liens d'articles complets
+    # Récupérer les liens vers de vrais articles
     links = [
-        a['href']
-        for a in soup.find_all('a', href=True)
-        if a['href'].startswith("/societe/") and a['href'].endswith(".php")
+        a['href'] for a in soup.find_all('a', href=True)
+        if a['href'].startswith("/fr/") and a['href'].count("-") >= 2
     ]
 
     for link in links:
         try:
-            article_url = f"https://www.20minutes.fr{link}"
+            article_url = f"https://www.france24.com{link}"
             article_resp = requests.get(article_url)
             article_soup = BeautifulSoup(article_resp.content, "html.parser")
 
-            # Titre : OK
             title_el = article_soup.find("h1")
             if not title_el:
                 continue
             title = title_el.get_text(strip=True)
 
-            # 🔥 Récupération du vrai contenu
-            content_wrapper = article_soup.find("div", class_="article-content")
-            if not content_wrapper:
-                content_wrapper = article_soup.find("div", class_="article-body")
-
-            if not content_wrapper:
-                continue  # structure inconnue → on saute
-
-            paragraphs = [p.get_text(strip=True) for p in content_wrapper.find_all("p")]
-            content = " ".join(paragraphs).strip()
+            paragraphs = article_soup.find_all("p")
+            content = " ".join(p.get_text(strip=True) for p in paragraphs)
 
             if len(content) > 300:
                 return title, article_url, content
 
-        except Exception as e:
+        except Exception:
             pass
 
     return "Aucun article trouvé.", "", ""
+
 
 
 
