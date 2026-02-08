@@ -69,19 +69,20 @@ def fetch_article_german():
     ]
     
     for link in links:
-        article_url = link if link.startswith("http") else f"https://www.zeit.de{link}"
-        article_resp = requests.get(article_url)
-        if "paywall" in article_resp.text.lower():
-            continue  # saut des articles paywall
-    
-        article_soup = BeautifulSoup(article_resp.content, "html.parser")
-        title_el = article_soup.find("h1")
-        if not title_el:
-            continue
-    
-        content = " ".join(p.get_text(strip=True) for p in article_soup.find_all("p"))
-        if len(content) > 300:
-            return title_el.get_text(strip=True), article_url, content
+        try :
+            article_url = link if link.startswith("http") else f"https://www.zeit.de{link}"
+            article_resp = requests.get(article_url)
+            if "paywall" in article_resp.text.lower():
+                continue  # saut des articles paywall
+        
+            article_soup = BeautifulSoup(article_resp.content, "html.parser")
+            title_el = article_soup.find("h1")
+            if not title_el:
+                continue
+        
+            content = " ".join(p.get_text(strip=True) for p in article_soup.find_all("p"))
+            if len(content) > 300:
+                return title_el.get_text(strip=True), article_url, content
 
 
         except Exception:
