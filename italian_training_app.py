@@ -41,7 +41,7 @@ def fetch_article_20minutes():
     response = requests.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
 
-    # Liens articles de la rubrique France
+    # Liens d'articles complets
     links = [
         a['href']
         for a in soup.find_all('a', href=True)
@@ -51,29 +51,34 @@ def fetch_article_20minutes():
     for link in links:
         try:
             article_url = f"https://www.20minutes.fr{link}"
-
             article_resp = requests.get(article_url)
             article_soup = BeautifulSoup(article_resp.content, "html.parser")
 
+            # Titre : OK
             title_el = article_soup.find("h1")
             if not title_el:
                 continue
             title = title_el.get_text(strip=True)
 
-            # Contenu : tous les paragraphes dans l'article
-            paragraphs = [
-                p.get_text(strip=True)
-                for p in article_soup.find_all("p")
-            ]
-            content = " ".join(paragraphs)
+            # 🔥 Récupération du vrai contenu
+            content_wrapper = article_soup.find("div", class_="article-content")
+            if not content_wrapper:
+                content_wrapper = article_soup.find("div", class_="article-body")
+
+            if not content_wrapper:
+                continue  # structure inconnue → on saute
+
+            paragraphs = [p.get_text(strip=True) for p in content_wrapper.find_all("p")]
+            content = " ".join(paragraphs).strip()
 
             if len(content) > 300:
                 return title, article_url, content
 
-        except Exception:
+        except Exception as e:
             pass
 
     return "Aucun article trouvé.", "", ""
+
 
 
 # ---- ALLEMAND : Tagesschau ----
