@@ -59,38 +59,30 @@ def fetch_article_franceinfo():
 
 # ---- ALLEMAND : Die Welt ----
 def fetch_article_german():
-    # Cible directement la rubrique Politik
-    url = "https://www.welt.de/politik/"
+    url = "https://www.zeit.de/politik/index"
     response = requests.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
-
-    # On récupère des liens d'articles politiques (finissant en .html)
+    
     links = [
         a['href'] for a in soup.find_all('a', href=True)
-        if a['href'].endswith('.html') and "/politik/" in a['href']
+        if "/politik/" in a['href'] and a['href'].endswith(".html")
     ]
-
+    
     for link in links:
-        article_url = link if link.startswith("http") else f"https://www.welt.de{link}"
-        try:
-            article_resp = requests.get(article_url)
-            article_soup = BeautifulSoup(article_resp.content, "html.parser")
+        article_url = link if link.startswith("http") else f"https://www.zeit.de{link}"
+        article_resp = requests.get(article_url)
+        if "paywall" in article_resp.text.lower():
+            continue  # saut des articles paywall
+    
+        article_soup = BeautifulSoup(article_resp.content, "html.parser")
+        title_el = article_soup.find("h1")
+        if not title_el:
+            continue
+    
+        content = " ".join(p.get_text(strip=True) for p in article_soup.find_all("p"))
+        if len(content) > 300:
+            return title_el.get_text(strip=True), article_url, content
 
-            title_el = article_soup.find('h1')
-            if not title_el:
-                continue
-
-            title = title_el.get_text(strip=True)
-
-            # Exclure les puzzles ou pages parasites
-            if "Kreuzworträtsel" in title or "Sudoku" in title:
-                continue
-
-            paragraphs = article_soup.find_all('p')
-            content = " ".join(p.get_text(strip=True) for p in paragraphs)
-
-            if len(content) > 300:  # article réel
-                return title, article_url, content
 
         except Exception:
             pass
