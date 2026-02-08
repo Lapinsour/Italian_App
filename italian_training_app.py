@@ -159,11 +159,11 @@ if st.button("Charger l'article"):
         src, tgt = "de", "fr"
 
     elif "français" in choice and "italien" in choice:
-        title, link, article = fetch_article_20minutes()
+        title, link, article = fetch_article_french()
         src, tgt = "fr", "it"
 
     elif "français" in choice and "allemand" in choice:
-        title, link, article = fetch_article_20minutes()
+        title, link, article = fetch_article_french()
         src, tgt = "fr", "de"
 
     # Sécurisation pour éviter le NameError
