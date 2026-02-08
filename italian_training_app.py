@@ -63,10 +63,12 @@ def fetch_article_german():
     response = requests.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
 
-    # On récupère les liens d'articles depuis la homepage
+    # On récupère des liens d'articles complets
     links = [
         a['href'] for a in soup.find_all('a', href=True)
-        if a['href'].startswith("/") and "inland" in a['href']
+        if a['href'].startswith("/")
+        and a['href'].endswith(".html")
+        and "multimedia" not in a['href']
     ]
 
     for link in links:
@@ -75,16 +77,21 @@ def fetch_article_german():
             article_resp = requests.get(article_url)
             article_soup = BeautifulSoup(article_resp.content, "html.parser")
 
-            # Titre
+            # Titre de l'article
             title_el = article_soup.find("h1")
             if not title_el:
                 continue
             title = title_el.get_text(strip=True)
 
-            # Contenu : Tagesschau utilise <p class="text__paragraph">
-            paragraphs = article_soup.find_all("p")
-            content = " ".join(p.get_text(strip=True) for p in paragraphs)
+            # Le texte de Tagesschau est dans des <p> normaux (hors chapô)
+            paragraphs = [
+                p.get_text(strip=True)
+                for p in article_soup.find_all("p")
+                if len(p.get_text(strip=True)) > 50  # éviter les brèves
+            ]
+            content = " ".join(paragraphs)
 
+            # Seuil : 300 caractères minimum
             if len(content) > 300:
                 return title, article_url, content
 
@@ -92,6 +99,7 @@ def fetch_article_german():
             pass
 
     return "Aucun article trouvé.", "", ""
+
 
 
 
