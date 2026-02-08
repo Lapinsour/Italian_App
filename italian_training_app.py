@@ -62,14 +62,20 @@ def fetch_article_german():
     url = "https://www.welt.de/"
     response = requests.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
-    links = [a['href'] for a in soup.find_all('a', href=True) if "politik" in a['href']]
+
+    # On récupère de vrais liens d'articles (avec .html à la fin)
+    links = [a['href'] for a in soup.find_all('a', href=True) if a['href'].endswith('.html')]
 
     for link in links:
         article_url = link if link.startswith("http") else f"https://www.welt.de{link}"
         try:
             article_resp = requests.get(article_url)
             article_soup = BeautifulSoup(article_resp.content, "html.parser")
-            title = article_soup.find('h1').get_text(strip=True)
+            title_el = article_soup.find('h1')
+            if not title_el:
+                continue
+            title = title_el.get_text(strip=True)
+
             paragraphs = article_soup.find_all('p')
             content = " ".join(p.get_text() for p in paragraphs)
             if len(content) > 300:
@@ -124,7 +130,7 @@ if st.button("Charger l'article"):
         title, link, article = fetch_article_franceinfo()
         src, tgt = "fr", "de"
 
-    st.session_state.title = title
+    st.session_state.title = title or "Titre introuvable"
     st.session_state.link = link
     st.session_state.sentences = split_into_sentences(article)
     st.session_state.src = src
