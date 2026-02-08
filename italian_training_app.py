@@ -57,33 +57,36 @@ def fetch_article_franceinfo():
     return "Aucun article trouvé.", "", ""
 
 
-# ---- ALLEMAND : Die Welt ----
+# ---- ALLEMAND : Tagesschau ----
 def fetch_article_german():
-    url = "https://www.zeit.de/politik/index"
+    url = "https://www.tagesschau.de"
     response = requests.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
-    
+
+    # On récupère les liens d'articles depuis la homepage
     links = [
         a['href'] for a in soup.find_all('a', href=True)
-        if "/politik/" in a['href'] and a['href'].endswith(".html")
+        if a['href'].startswith("/") and "inland" in a['href']
     ]
-    
+
     for link in links:
-        try :
-            article_url = link if link.startswith("http") else f"https://www.zeit.de{link}"
+        try:
+            article_url = f"https://www.tagesschau.de{link}"
             article_resp = requests.get(article_url)
-            if "paywall" in article_resp.text.lower():
-                continue  # saut des articles paywall
-        
             article_soup = BeautifulSoup(article_resp.content, "html.parser")
+
+            # Titre
             title_el = article_soup.find("h1")
             if not title_el:
                 continue
-        
-            content = " ".join(p.get_text(strip=True) for p in article_soup.find_all("p"))
-            if len(content) > 300:
-                return title_el.get_text(strip=True), article_url, content
+            title = title_el.get_text(strip=True)
 
+            # Contenu : Tagesschau utilise <p class="text__paragraph">
+            paragraphs = article_soup.find_all("p")
+            content = " ".join(p.get_text(strip=True) for p in paragraphs)
+
+            if len(content) > 300:
+                return title, article_url, content
 
         except Exception:
             pass
