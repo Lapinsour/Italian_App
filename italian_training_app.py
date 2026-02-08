@@ -35,25 +35,44 @@ def fetch_article_italian():
     return "Aucun article trouvé.", "", ""
 
 
-# ---- FRANÇAIS : Franceinfo ----
-def fetch_article_franceinfo():
-    url = "https://www.francetvinfo.fr/"
+# ---- FRANÇAIS : 20Minutes ----
+def fetch_article_20minutes():
+    url = "https://www.20minutes.fr/"
     response = requests.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
-    links = [a['href'] for a in soup.find_all('a', href=True) if "/france/" in a['href']]
+
+    # Liens articles de la rubrique France
+    links = [
+        a['href']
+        for a in soup.find_all('a', href=True)
+        if a['href'].startswith("/societe/") and a['href'].endswith(".php")
+    ]
 
     for link in links:
-        article_url = link if link.startswith("http") else f"https://www.francetvinfo.fr{link}"
         try:
+            article_url = f"https://www.20minutes.fr{link}"
+
             article_resp = requests.get(article_url)
             article_soup = BeautifulSoup(article_resp.content, "html.parser")
-            title = article_soup.find('h1').get_text(strip=True)
-            paragraphs = article_soup.find_all('p')
-            content = " ".join(p.get_text() for p in paragraphs)
+
+            title_el = article_soup.find("h1")
+            if not title_el:
+                continue
+            title = title_el.get_text(strip=True)
+
+            # Contenu : tous les paragraphes dans l'article
+            paragraphs = [
+                p.get_text(strip=True)
+                for p in article_soup.find_all("p")
+            ]
+            content = " ".join(paragraphs)
+
             if len(content) > 300:
                 return title, article_url, content
-        except:
+
+        except Exception:
             pass
+
     return "Aucun article trouvé.", "", ""
 
 
@@ -144,11 +163,11 @@ if st.button("Charger l'article"):
         src, tgt = "de", "fr"
 
     elif "français" in choice and "italien" in choice:
-        title, link, article = fetch_article_franceinfo()
+        title, link, article = fetch_article_20minutes()
         src, tgt = "fr", "it"
 
     elif "français" in choice and "allemand" in choice:
-        title, link, article = fetch_article_franceinfo()
+        title, link, article = fetch_article_20minutes()
         src, tgt = "fr", "de"
 
     # Sécurisation pour éviter le NameError
