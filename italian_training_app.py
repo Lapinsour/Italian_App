@@ -4,6 +4,9 @@ from bs4 import BeautifulSoup
 from deep_translator import GoogleTranslator
 import nltk
 import re
+import feedparser
+
+
 
 # Télécharger les ressources NLTK
 nltk.download('punkt_tab')
@@ -35,37 +38,29 @@ def fetch_article_italian():
     return "Aucun article trouvé.", "", ""
 
 
-# ---- FRANÇAIS : France24 ----
+# ---- FRANÇAIS :  ----
 def fetch_article_french():
-    url = "https://www.france24.com/fr/france/"
-    response = requests.get(url)
-    soup = BeautifulSoup(response.content, "html.parser")
+    """
+    Récupère le premier article du flux RSS "Flash Actualité" du Parisien.
+    Retourne : (titre, url, contenu)
+    """
+    rss_url = "https://www.leparisien.fr/flash-actualite/rss.xml"
+    feed = feedparser.parse(rss_url)
 
-    # Récupérer les liens vers de vrais articles
-    links = [
-        a['href'] for a in soup.find_all('a', href=True)
-        if a['href'].startswith("/fr/") and a['href'].count("-") >= 2
-    ]
-
-    for link in links:
+    for entry in feed.entries:
         try:
-            article_url = f"https://www.france24.com{link}"
-            article_resp = requests.get(article_url)
-            article_soup = BeautifulSoup(article_resp.content, "html.parser")
+            title = entry.title.strip()
+            link = entry.link.strip()
+            
+            # Utiliser description si pas de contenu complet
+            # Normalement RSS ne contient que résumé
+            content = entry.summary.strip()
 
-            title_el = article_soup.find("h1")
-            if not title_el:
-                continue
-            title = title_el.get_text(strip=True)
-
-            paragraphs = article_soup.find_all("p")
-            content = " ".join(p.get_text(strip=True) for p in paragraphs)
-
-            if len(content) > 300:
-                return title, article_url, content
-
+            # On filtre les articles trop courts
+            if len(content) > 50:
+                return title, link, content
         except Exception:
-            pass
+            continue
 
     return "Aucun article trouvé.", "", ""
 
