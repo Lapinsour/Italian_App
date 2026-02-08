@@ -59,30 +59,44 @@ def fetch_article_franceinfo():
 
 # ---- ALLEMAND : Die Welt ----
 def fetch_article_german():
-    url = "https://www.welt.de/"
+    # Cible directement la rubrique Politik
+    url = "https://www.welt.de/politik/"
     response = requests.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
 
-    # On récupère de vrais liens d'articles (avec .html à la fin)
-    links = [a['href'] for a in soup.find_all('a', href=True) if a['href'].endswith('.html')]
+    # On récupère des liens d'articles politiques (finissant en .html)
+    links = [
+        a['href'] for a in soup.find_all('a', href=True)
+        if a['href'].endswith('.html') and "/politik/" in a['href']
+    ]
 
     for link in links:
         article_url = link if link.startswith("http") else f"https://www.welt.de{link}"
         try:
             article_resp = requests.get(article_url)
             article_soup = BeautifulSoup(article_resp.content, "html.parser")
+
             title_el = article_soup.find('h1')
             if not title_el:
                 continue
+
             title = title_el.get_text(strip=True)
 
+            # Exclure les puzzles ou pages parasites
+            if "Kreuzworträtsel" in title or "Sudoku" in title:
+                continue
+
             paragraphs = article_soup.find_all('p')
-            content = " ".join(p.get_text() for p in paragraphs)
-            if len(content) > 300:
+            content = " ".join(p.get_text(strip=True) for p in paragraphs)
+
+            if len(content) > 300:  # article réel
                 return title, article_url, content
-        except:
+
+        except Exception:
             pass
+
     return "Aucun article trouvé.", "", ""
+
 
 
 #############################################
@@ -114,6 +128,9 @@ choice = st.selectbox(
 )
 
 if st.button("Charger l'article"):
+    title, link, article = "", "", ""
+    src, tgt = None, None
+
     if "italien" in choice:
         title, link, article = fetch_article_italian()
         src, tgt = "it", "fr"
@@ -130,12 +147,17 @@ if st.button("Charger l'article"):
         title, link, article = fetch_article_franceinfo()
         src, tgt = "fr", "de"
 
-    st.session_state.title = title or "Titre introuvable"
+    # Sécurisation pour éviter le NameError
+    title = title or "Titre introuvable"
+    article = article or ""
+
+    st.session_state.title = title
     st.session_state.link = link
     st.session_state.sentences = split_into_sentences(article)
     st.session_state.src = src
     st.session_state.tgt = tgt
     st.session_state.trans = {}
+
 
 if "sentences" in st.session_state:
     st.header(st.session_state.title)
