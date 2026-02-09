@@ -40,37 +40,45 @@ def fetch_article_italian():
 
 # ---- FRANÇAIS : FranceInfo ----
 def fetch_article_french():
-    url = "https://www.franceinfo.fr/"
+    url = "https://www.franceinfo.fr/france/"
     response = requests.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
 
-    
-    links = [a['href'] for a in soup.find_all('a', href=True) if "/france/" in a['href']]
+    # On récupère le premier vrai lien d'article
+    first_link = soup.select_one("a.teaser-title-link")
 
+    if not first_link:
+        return "Aucun article trouvé.", "", ""
 
-    for link in links:
-        article_url = link if link.startswith("http") else f"https://www.franceinfo.fr/france{link}"
-        try:
-            article_resp = requests.get(article_url)
-            article_soup = BeautifulSoup(article_resp.content, "html.parser")
+    article_url = first_link["href"]
+    if not article_url.startswith("http"):
+        article_url = "https://www.franceinfo.fr" + article_url
 
-            # 🔥 Sélecteurs corrects pour FranceInfo
-            title_el = article_soup.find("h1", class_="fi-title")
-            body = article_soup.find("div", class_="fi-article__body")
+    # On charge maintenant la page de l’article
+    article_resp = requests.get(article_url)
+    article_soup = BeautifulSoup(article_resp.content, "html.parser")
 
-            if not title_el or not body:
-                continue
+    # Titre
+    title_tag = article_soup.find("h1")
+    if not title_tag:
+        return "Titre introuvable.", article_url, ""
 
-            title = title_el.get_text(strip=True)
-            content = " ".join(p.get_text(strip=True) for p in body.find_all("p"))
+    title = title_tag.get_text(strip=True)
 
-            if len(content) > 300:
-                return title, article_url, content
+    # Contenu : Franceinfo utilise <p class="article__paragraph">
+    paragraphs = article_soup.select("p.article__paragraph")
 
-        except:
-            pass
+    if not paragraphs:
+        # fallback générique
+        paragraphs = article_soup.find_all("p")
 
-    return "Aucun article trouvé.", "", ""
+    content = " ".join(p.get_text(strip=True) for p in paragraphs)
+
+    if len(content) < 200:
+        return title, article_url, "Contenu trop court ou non détecté."
+
+    return title, article_url, content
+
 
 
 
