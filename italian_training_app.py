@@ -44,14 +44,14 @@ def fetch_article_french():
     response = requests.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
 
-    # 🔥 Ne garder que les ARTICLES (finit par .html)
+    
     links = [
         a['href'] for a in soup.find_all('a', href=True)
         if "/france/" in a['href'] and a['href'].endswith(".html")
     ]
 
     for link in links:
-        article_url = link if link.startswith("http") else f"https://www.francetvinfo.fr{link}"
+        article_url = link if link.startswith("http") else f"https://www.franceinfo.fr/france{link}"
         try:
             article_resp = requests.get(article_url)
             article_soup = BeautifulSoup(article_resp.content, "html.parser")
