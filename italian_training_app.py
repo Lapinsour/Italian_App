@@ -40,28 +40,23 @@ def fetch_article_italian():
 
 # ---- FRANÇAIS :  ----
 def fetch_article_french():
-    """
-    Récupère le premier article du flux RSS "Flash Actualité" du Parisien.
-    Retourne : (titre, url, contenu)
-    """
-    rss_url = "https://www.leparisien.fr/flash-actualite/rss.xml"
-    feed = feedparser.parse(rss_url)
+    url = "https://www.francetvinfo.fr/"
+    response = requests.get(url)
+    soup = BeautifulSoup(response.content, "html.parser")
+    links = [a['href'] for a in soup.find_all('a', href=True) if "/france/" in a['href']]
 
-    for entry in feed.entries:
+    for link in links:
+        article_url = link if link.startswith("http") else f"https://www.francetvinfo.fr{link}"
         try:
-            title = entry.title.strip()
-            link = entry.link.strip()
-            
-            # Utiliser description si pas de contenu complet
-            # Normalement RSS ne contient que résumé
-            content = entry.summary.strip()
-
-            # On filtre les articles trop courts
-            if len(content) > 50:
-                return title, link, content
-        except Exception:
-            continue
-
+            article_resp = requests.get(article_url)
+            article_soup = BeautifulSoup(article_resp.content, "html.parser")
+            title = article_soup.find('h1').get_text(strip=True)
+            paragraphs = article_soup.find_all('p')
+            content = " ".join(p.get_text() for p in paragraphs)
+            if len(content) > 300:
+                return title, article_url, content
+        except:
+            pass
     return "Aucun article trouvé.", "", ""
 
 
