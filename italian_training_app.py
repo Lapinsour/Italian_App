@@ -40,7 +40,7 @@ def fetch_article_italian():
 
 # ---- FRANÇAIS : FranceInfo ----
 def fetch_article_french():
-    url = "https://www.francetvinfo.fr/"
+    url = "https://www.franceinfo.fr/"
     response = requests.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
 
