@@ -41,41 +41,40 @@ def fetch_article_italian():
 # ---- FRANÇAIS : FranceInfo ----
 def fetch_article_french():
     url = "https://www.franceinfo.fr/france/"
-    response = requests.get(url)
+    response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
     soup = BeautifulSoup(response.content, "html.parser")
 
-    # On récupère le premier vrai lien d'article
-    first_link = soup.select_one("a.teaser-title-link")
+    # 1) On récupère le premier lien de la rubrique
+    link_tag = soup.select_one("a.fi-section-article-link")
+    if not link_tag:
+        return "Aucun lien trouvé.", "", ""
 
-    if not first_link:
-        return "Aucun article trouvé.", "", ""
-
-    article_url = first_link["href"]
+    article_url = link_tag["href"]
     if not article_url.startswith("http"):
         article_url = "https://www.franceinfo.fr" + article_url
 
-    # On charge maintenant la page de l’article
-    article_resp = requests.get(article_url)
+    # 2) On visite la page de l'article
+    article_resp = requests.get(article_url, headers={"User-Agent": "Mozilla/5.0"})
     article_soup = BeautifulSoup(article_resp.content, "html.parser")
 
-    # Titre
+    # 3) Titre
     title_tag = article_soup.find("h1")
     if not title_tag:
         return "Titre introuvable.", article_url, ""
 
     title = title_tag.get_text(strip=True)
 
-    # Contenu : Franceinfo utilise <p class="article__paragraph">
+    # 4) Corps de l’article (class officielle Franceinfo)
     paragraphs = article_soup.select("p.article__paragraph")
 
+    # fallback si nécessaire
     if not paragraphs:
-        # fallback générique
         paragraphs = article_soup.find_all("p")
 
     content = " ".join(p.get_text(strip=True) for p in paragraphs)
 
     if len(content) < 200:
-        return title, article_url, "Contenu trop court ou non détecté."
+        return title, article_url, "Contenu trop court ou non trouvé."
 
     return title, article_url, content
 
