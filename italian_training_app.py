@@ -43,26 +43,37 @@ def fetch_article_french():
     url = "https://www.francetvinfo.fr/"
     response = requests.get(url)
     soup = BeautifulSoup(response.content, "html.parser")
+
+    # 🔥 Ne garder que les ARTICLES (finit par .html)
     links = [
         a['href'] for a in soup.find_all('a', href=True)
         if "/france/" in a['href'] and a['href'].endswith(".html")
     ]
-    
-
 
     for link in links:
-        article_url = link if link.startswith("http") else f"https://www.franceinfo.fr/france/{link}"
+        article_url = link if link.startswith("http") else f"https://www.francetvinfo.fr{link}"
         try:
             article_resp = requests.get(article_url)
             article_soup = BeautifulSoup(article_resp.content, "html.parser")
-            title = article_soup.find('h1').get_text(strip=True)
-            paragraphs = article_soup.find_all('p')
-            content = " ".join(p.get_text() for p in paragraphs)
+
+            # 🔥 Sélecteurs corrects pour FranceInfo
+            title_el = article_soup.find("h1", class_="fi-title")
+            body = article_soup.find("div", class_="fi-article__body")
+
+            if not title_el or not body:
+                continue
+
+            title = title_el.get_text(strip=True)
+            content = " ".join(p.get_text(strip=True) for p in body.find_all("p"))
+
             if len(content) > 300:
                 return title, article_url, content
+
         except:
             pass
+
     return "Aucun article trouvé.", "", ""
+
 
 
 
