@@ -44,33 +44,32 @@ def fetch_article_french():
     response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
     soup = BeautifulSoup(response.content, "html.parser")
 
-    # 1) On récupère le premier lien de la rubrique
-    link_tag = soup.select_one("a.fi-section-article-link")
-    if not link_tag:
+    # On récupère tous les liens de la page qui pointent vers de vrais articles
+    links = [
+        a["href"]
+        for a in soup.find_all("a", href=True)
+        if a["href"].startswith("/france/")
+        and a["href"].endswith(".html")
+    ]
+
+    if not links:
         return "Aucun lien trouvé.", "", ""
 
-    article_url = link_tag["href"]
+    # On prend le premier
+    article_url = links[0]
     if not article_url.startswith("http"):
         article_url = "https://www.franceinfo.fr" + article_url
 
-    # 2) On visite la page de l'article
+    # On visite la page de l’article
     article_resp = requests.get(article_url, headers={"User-Agent": "Mozilla/5.0"})
     article_soup = BeautifulSoup(article_resp.content, "html.parser")
 
-    # 3) Titre
+    # Titre
     title_tag = article_soup.find("h1")
-    if not title_tag:
-        return "Titre introuvable.", article_url, ""
+    title = title_tag.get_text(strip=True) if title_tag else "Titre introuvable"
 
-    title = title_tag.get_text(strip=True)
-
-    # 4) Corps de l’article (class officielle Franceinfo)
-    paragraphs = article_soup.select("p.article__paragraph")
-
-    # fallback si nécessaire
-    if not paragraphs:
-        paragraphs = article_soup.find_all("p")
-
+    # Contenu : Franceinfo place le texte dans <p> normaux
+    paragraphs = article_soup.find_all("p")
     content = " ".join(p.get_text(strip=True) for p in paragraphs)
 
     if len(content) < 200:
