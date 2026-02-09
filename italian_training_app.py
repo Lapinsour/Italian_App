@@ -45,10 +45,8 @@ def fetch_article_french():
     soup = BeautifulSoup(response.content, "html.parser")
 
     
-    links = [
-        a['href'] for a in soup.find_all('a', href=True)
-        if "/france/" in a['href'] and a['href'].endswith(".html")
-    ]
+    links = [a['href'] for a in soup.find_all('a', href=True) if "/france/" in a['href']]
+
 
     for link in links:
         article_url = link if link.startswith("http") else f"https://www.franceinfo.fr/france{link}"
