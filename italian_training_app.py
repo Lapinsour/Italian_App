@@ -145,7 +145,7 @@ if st.button("Charger l'article"):
     title, link, article = "", "", ""
     src, tgt = None, None
 
-    if "italien" in choice:
+    if "italien" in choice and "français" not in choice:
         title, link, article = fetch_article_italian()
         src, tgt = "it", "fr"
 
@@ -154,10 +154,8 @@ if st.button("Charger l'article"):
         src, tgt = "de", "fr"
 
     elif "français" in choice and "italien" in choice:
-        st.write("Veuillez coller ci-dessous un article en français :")
-        article = st.text_area("Article en français", height=300)
-        title = "Article fourni par l'utilisateur"
-        link = ""
+        title, link, article = fetch_article_french()
+        
         src, tgt = "fr", "it"
     
     elif "français" in choice and "allemand" in choice:
