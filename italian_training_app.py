@@ -134,10 +134,10 @@ st.write("Choisissez une action :")
 choice = st.selectbox(
     "Sélection",
     [
-        "Charger un article en italien (→ traduction FR)",
-        "Charger un article en allemand (→ traduction FR)",
-        "Charger un article en français (→ traduction IT)",
-        "Charger un article en français (→ traduction DE)",
+        "Charger un article en italien",
+        "Charger un article en allemand",
+        "Charger un article en français (vers l'allemand)",
+        "Charger un article en français (vers l'italien)",
     ]
 )
 
