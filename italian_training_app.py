@@ -51,7 +51,7 @@ def fetch_article_french():
 
 
     for link in links:
-        article_url = link if link.startswith("http") else f"https://www.francetvinfo.fr{link}"
+        article_url = link if link.startswith("http") else f"https://www.franceinfo.fr/france/{link}"
         try:
             article_resp = requests.get(article_url)
             article_soup = BeautifulSoup(article_resp.content, "html.parser")
