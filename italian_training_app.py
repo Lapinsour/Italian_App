@@ -38,49 +38,6 @@ def fetch_article_italian():
     return "Aucun article trouvé.", "", ""
 
 
-# ---- FRANÇAIS : FranceInfo ----
-def fetch_article_french():
-    url = "https://www.franceinfo.fr/france/"
-    response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
-    soup = BeautifulSoup(response.content, "html.parser")
-
-    # On récupère tous les liens de la page qui pointent vers de vrais articles
-    links = [
-        a["href"]
-        for a in soup.find_all("a", href=True)
-        if a["href"].startswith("/france/")
-        and a["href"].endswith(".html")
-    ]
-
-    if not links:
-        return "Aucun lien trouvé.", "", ""
-
-    # On prend le premier
-    article_url = links[0]
-    if not article_url.startswith("http"):
-        article_url = "https://www.franceinfo.fr" + article_url
-
-    # On visite la page de l’article
-    article_resp = requests.get(article_url, headers={"User-Agent": "Mozilla/5.0"})
-    article_soup = BeautifulSoup(article_resp.content, "html.parser")
-
-    # Titre
-    title_tag = article_soup.find("h1")
-    title = title_tag.get_text(strip=True) if title_tag else "Titre introuvable"
-
-    # Contenu : Franceinfo place le texte dans <p> normaux
-    paragraphs = article_soup.find_all("p")
-    content = " ".join(p.get_text(strip=True) for p in paragraphs)
-
-    if len(content) < 200:
-        return title, article_url, "Contenu trop court ou non trouvé."
-
-    return title, article_url, content
-
-
-
-
-
 
 # ---- ALLEMAND : Tagesschau ----
 def fetch_article_german():
@@ -150,9 +107,7 @@ choice = st.selectbox(
     "Sélection",
     [
         "Charger un article en italien",
-        "Charger un article en allemand",
-        "Charger un article en français (vers l'allemand)",
-        "Charger un article en français (vers l'italien)",
+        "Charger un article en allemand"        
     ]
 )
 
@@ -166,15 +121,7 @@ if st.button("Charger l'article"):
 
     elif "allemand" in choice and "français" not in choice:
         title, link, article = fetch_article_german()
-        src, tgt = "de", "fr"
-
-    elif "français" in choice and "italien" in choice:
-        title, link, article = fetch_article_french()        
-        src, tgt = "fr", "it"
-    
-    elif "français" in choice and "allemand" in choice:
-        title, link, article = fetch_article_french()
-        src, tgt = "fr", "de"
+        src, tgt = "de", "fr"    
 
 
     # Sécurisation pour éviter le NameError
